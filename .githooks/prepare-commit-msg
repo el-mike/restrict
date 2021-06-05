@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+
+COMMIT_MSG_FILENAME=$1
+# git hooks are executed from project's root, therefore
+# we need to set up the path properly.
+python3 $PWD/.githooks/scripts/validate_msg.py $COMMIT_MSG_FILENAME
+
