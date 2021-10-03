@@ -3,7 +3,7 @@ package restrict
 // PolicyDefinition - describes a model of roles and grants that
 // are defined for the application.
 type PolicyDefinition struct {
-	Resources     []string
-	Roles         map[string]*Role
-	IdentityField string
+	Roles          Roles
+	IdentityField  string
+	OwnershipField string
 }

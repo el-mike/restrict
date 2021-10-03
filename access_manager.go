@@ -71,7 +71,7 @@ func (am *AccessManager) IsGranted(request *AccessRequest) (bool, error) {
 }
 
 // hasAction - checks if grants list contains given action.
-func (am *AccessManager) validateAction(permissions []Permission, action string, request *AccessRequest) bool {
+func (am *AccessManager) validateAction(permissions []*Permission, action string, request *AccessRequest) bool {
 	for _, grant := range permissions {
 		if grant.Action == action && am.checkConditions(grant, request) {
 			return true
@@ -83,7 +83,7 @@ func (am *AccessManager) validateAction(permissions []Permission, action string,
 
 // checkConditions - returns true if all conditions specified for given actions
 // are satisfied, false otherwise.
-func (am *AccessManager) checkConditions(permission Permission, request *AccessRequest) bool {
+func (am *AccessManager) checkConditions(permission *Permission, request *AccessRequest) bool {
 	for key, condition := range permission.Conditions {
 		if satisfied := condition.Check(request.Context[key], request); !satisfied {
 			return false
