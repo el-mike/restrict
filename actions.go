@@ -8,3 +8,5 @@ const (
 	Delete string = "DELETE" // Delete - action for deleting resource of given type.
 	CRUD   string = "CRUD"   // CRUD - action encompassing all CRUD actions.
 )
+
+type Actions []string
