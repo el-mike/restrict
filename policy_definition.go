@@ -4,7 +4,6 @@ package restrict
 // are defined for the application.
 type PolicyDefinition struct {
 	Resources     []string
-	Actions       []Action
 	Roles         map[string]*Role
 	IdentityField string
 }

@@ -1,10 +1,8 @@
 package restrict
 
-// Permission - result of checking if Action is granted
-// for a given Role in regard of wanted Resource.
+// Permission - describes an Action that can be performed in regards to
+// some resource, with specified conditions.
 type Permission struct {
-	ResourceID string   `json:"id"`
-	Actions    []Action `json:"actions"`
-	Attributes []string `json:"attributes"`
-	Granted    bool     `json:"granted"`
+	Action     string     `json:"action"`
+	Conditions Conditions `json:"conditions"`
 }
