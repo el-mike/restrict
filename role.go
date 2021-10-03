@@ -1,6 +1,6 @@
 package restrict
 
-type GrantsMap map[string][]Action
+type GrantsMap map[string][]Permission
 
 // Role - a set of granted permissions, that can be
 // assign to a user.
