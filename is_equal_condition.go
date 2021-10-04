@@ -6,11 +6,11 @@ import (
 	"github.com/el-Mike/restrict/utils"
 )
 
-const IS_EQUAL_CONDITION_NAME string = "IS_EQUAL_CONDITION"
+const IS_EQUAL_CONDITION_NAME string = "IS_EQUAL"
 
 type IsEqualCondition struct {
-	Value      interface{} `json:"equals"`
-	ContextKey string      `json:"contextKey"`
+	Value      interface{} `json:"equals,omitempty" yaml:"equals,omitempty"`
+	ContextKey string      `json:"contextKey,omitempty" yaml:"contextKey,omitempty"`
 }
 
 // Name - returns Condition's name.
