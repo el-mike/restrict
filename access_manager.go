@@ -10,30 +10,23 @@ import (
 // provides an interface to perform authorization checks and add/remove
 // Permissions and Roles.
 type AccessManager struct {
-	PolicyDefinition *PolicyDefinition `json:"policyDefinition"`
+	policyManager *PolicyManager
 }
-
-// AM - singleton variable for storing AccessManager instance.
-var AM *AccessManager
 
 // InitAccessManager - initializes AccessManager with provided PolicyDefinition
 // and sets singleton instance.
-func InitAccessManager(policyDefinition *PolicyDefinition) (*AccessManager, error) {
-	if AM != nil {
-		return nil, errors.New("AccessManager already initialized!")
+func NewAccessManager(policyManager *PolicyManager) *AccessManager {
+	return &AccessManager{
+		policyManager: policyManager,
 	}
-
-	AM = &AccessManager{
-		PolicyDefinition: policyDefinition,
-	}
-
-	return AM, nil
 }
 
 // IsGranted - checks if given Actions are granted to a Role in regard to resourceID
 // an entity wants to access.
 func (am *AccessManager) IsGranted(request *AccessRequest) (bool, error) {
-	role := am.PolicyDefinition.Roles[request.Role]
+	policy := am.policyManager.GetPolicy()
+
+	role := policy.Roles[request.Role]
 
 	if role == nil {
 		return false, errors.New("Role does not exist!")

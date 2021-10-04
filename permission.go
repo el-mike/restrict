@@ -13,12 +13,9 @@ type Permission struct {
 	Conditions Conditions `json:"conditions" yaml:"conditions"`
 }
 
-// marshalablePermission - helper type for handling marshaling/unmarshaling
+// marshalablePermission - helper alias type for handling marshaling/unmarshaling
 // of JSON and YAML structures.
-type marshalablePermission struct {
-	Action     string     `json:"action" yaml:"action"`
-	Conditions Conditions `json:"conditions" yaml:"conditions"`
-}
+type marshalablePermission Permission
 
 // UnmarshalJSON - implementation of json.Marshaler.UnmarshalJSON, for creating Permission
 // object from JSON. It takes care of initializating empty Conditions map.
