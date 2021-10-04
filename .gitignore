@@ -1,2 +1,5 @@
-playground_test.go
 .vscode
+
+playground_test.go
+test_policy.json
+main.go
