@@ -2,14 +2,11 @@
 // authorization model.
 package restrict
 
-import (
-	"errors"
-)
-
 // AccessManager - manages all of the defined Permissions and Roles,
 // provides an interface to perform authorization checks and add/remove
 // Permissions and Roles.
 type AccessManager struct {
+	// Instance of PolicyManager, responsible for managing currently loaded policy.
 	policyManager *PolicyManager
 }
 
@@ -21,46 +18,64 @@ func NewAccessManager(policyManager *PolicyManager) *AccessManager {
 	}
 }
 
-// IsGranted - checks if given Actions are granted to a Role in regard to resourceID
-// an entity wants to access.
-func (am *AccessManager) IsGranted(request *AccessRequest) (bool, error) {
-	policy := am.policyManager.GetPolicy()
-
-	role := policy.Roles[request.Role]
-
-	if role == nil {
-		return false, errors.New("Role does not exist!")
+// IsGranted - checks if given AccessRequest can be satsified given currently loaded policy.
+// Returns error if access is not granted or any other problem occured, nil otherwise.
+func (am *AccessManager) IsGranted(request *AccessRequest) error {
+	role, err := am.policyManager.GetRole(request.Role)
+	if err != nil {
+		return err
 	}
 
 	grants := role.Grants[request.Resource]
 	parents := role.Parents
 
-	isGranted := true
-
+	// If given role has no permissions granted, and no parents to
+	// fall back on, return an error.
 	if len(grants) == 0 && len(parents) == 0 {
-		return false, nil
+		return NewNoAvailablePermissionsError(role.ID)
 	}
 
 	for _, action := range request.Actions {
-		isGranted = isGranted && am.validateAction(grants, action, request)
+		granted := am.validateAction(grants, action, request)
 
-		if len(parents) > 0 {
+		// If access if not granted for given action on current Role, check if
+		// any parent Role can satisfy the request.
+		if !granted && len(parents) > 0 {
 			for _, parent := range parents {
-				request.Role = parent
-				granted, err := am.IsGranted(request)
-
-				if err != nil {
-					return false, err
+				parentRequest := &AccessRequest{
+					Role:     parent,
+					Resource: request.Resource,
+					Actions:  []string{action},
+					Context:  request.Context,
 				}
 
-				if granted {
-					return true, nil
+				if err := am.IsGranted(parentRequest); err != nil {
+					switch err.(type) {
+					// If the returned error is one of the below, it just means that
+					// access has been denied for some reason.
+					case *NoAvailablePermissionsError, *AccessDeniedError:
+						granted = false
+
+					// Otherwise, some other problem occured, and we want to propagate
+					// the exception to the caller.
+					default:
+						return err
+					}
+				} else {
+					// If .IsGranted call with parent Role has returned nil,
+					// that means the request is satisfied.
+					granted = true
 				}
 			}
 		}
+
+		// If request has not been granted, abort the loop and return an error.
+		if !granted {
+			return NewAccessDeniedError(request, action)
+		}
 	}
 
-	return isGranted, nil
+	return nil
 }
 
 // hasAction - checks if grants list contains given action.

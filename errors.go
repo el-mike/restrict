@@ -46,7 +46,7 @@ type PermissionNotFoundError struct {
 }
 
 // NewPermissionNotFoundError - returns new PermissionNotFoundError instance.
-func NewPermissionNotFoundError(resourceID string, action string) *PermissionNotFoundError {
+func NewPermissionNotFoundError(resourceID, action string) *PermissionNotFoundError {
 	return &PermissionNotFoundError{
 		resourceID: resourceID,
 		action:     action,
@@ -66,7 +66,7 @@ type PermissionAlreadyExistsError struct {
 }
 
 // NewPermissionAlreadyExistsError - returns new PermissionAlreadyExistsError instance.
-func NewPermissionAlreadyExistsError(resourceID string, action string) *PermissionAlreadyExistsError {
+func NewPermissionAlreadyExistsError(resourceID, action string) *PermissionAlreadyExistsError {
 	return &PermissionAlreadyExistsError{
 		resourceID: resourceID,
 		action:     action,
@@ -76,4 +76,46 @@ func NewPermissionAlreadyExistsError(resourceID string, action string) *Permissi
 // Error - error interface implementation.
 func (e *PermissionAlreadyExistsError) Error() string {
 	return fmt.Sprintf("Permission for action: %s already exists for resource: %s", e.action, e.resourceID)
+}
+
+// NoAvailablePermissionsError - thrown when no Permissions are available for given role.
+type NoAvailablePermissionsError struct {
+	roleID string
+}
+
+// NewNoAvailablePermissionsError - returns new NoAvailablePermissionsError instance.
+func NewNoAvailablePermissionsError(roleID string) *NoAvailablePermissionsError {
+	return &NoAvailablePermissionsError{
+		roleID: roleID,
+	}
+}
+
+// Error - error interface implementation.
+func (e *NoAvailablePermissionsError) Error() string {
+	return fmt.Sprintf("No permissions are available for role: %s", e.roleID)
+}
+
+// AccessDeniedError - thrown when AccessRequest could not be satisfied due to
+// insufficient permissions setup.
+type AccessDeniedError struct {
+	action  string
+	request *AccessRequest
+}
+
+// NewAccessDeniedError - returns new AccessDeniedError instance.
+func NewAccessDeniedError(request *AccessRequest, action string) *AccessDeniedError {
+	return &AccessDeniedError{
+		request: request,
+		action:  action,
+	}
+}
+
+// Error - error interface implementation.
+func (e *AccessDeniedError) Error() string {
+	return fmt.Sprintf("Access denied for action: %s", e.action)
+}
+
+// FailedRequest - returns AccessRequest for which access has been denied.
+func (e *AccessDeniedError) FailedRequest() *AccessRequest {
+	return e.request
 }

@@ -68,6 +68,20 @@ func (pm *PolicyManager) GetPolicy() *PolicyDefinition {
 	return pm.policy
 }
 
+// GetRole - returns a Role with given ID from currently loaded PolicyDefiniton.
+func (pm *PolicyManager) GetRole(roleID string) (*Role, error) {
+	pm.RLock()
+	defer pm.RUnlock()
+
+	role := pm.getRole(roleID)
+	// If given Role does not exists, return an error.
+	if role == nil {
+		return nil, NewRoleNotFoundError(roleID)
+	}
+
+	return role, nil
+}
+
 // AddRole - adds a new role to the policy.
 // Saves with StorageAdapter if autoUpdate is set to true.
 func (pm *PolicyManager) AddRole(role *Role) error {
