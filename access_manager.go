@@ -92,6 +92,10 @@ func (am *AccessManager) validateAction(permissions []*Permission, action string
 // checkConditions - returns true if all conditions specified for given actions
 // are satisfied, false otherwise.
 func (am *AccessManager) checkConditions(permission *Permission, request *AccessRequest) bool {
+	if permission.Conditions == nil {
+		return true
+	}
+
 	for key, condition := range permission.Conditions {
 		if satisfied := condition.Check(request.Context[key], request); !satisfied {
 			return false
