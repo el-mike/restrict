@@ -42,40 +42,40 @@ func (e *RoleAlreadyExistsError) Error() string {
 // that does not exist.
 type PermissionNotFoundError struct {
 	resourceID string
-	action     string
+	name       string
 }
 
 // NewPermissionNotFoundError - returns new PermissionNotFoundError instance.
-func NewPermissionNotFoundError(resourceID, action string) *PermissionNotFoundError {
+func NewPermissionNotFoundError(resourceID, name string) *PermissionNotFoundError {
 	return &PermissionNotFoundError{
 		resourceID: resourceID,
-		action:     action,
+		name:       name,
 	}
 }
 
 // Error - error interface implementation.
 func (e *PermissionNotFoundError) Error() string {
-	return fmt.Sprintf("Permission for action: %s dot not exist for resource: %s", e.action, e.resourceID)
+	return fmt.Sprintf("Permission with name: %s dot not exist for resource: %s", e.name, e.resourceID)
 }
 
 // PermissionAlreadyExistsError - thrown when new permision is being added
-// with an action that already exists for given resource.
+// with a name that already exists for given resource.
 type PermissionAlreadyExistsError struct {
 	resourceID string
-	action     string
+	name       string
 }
 
 // NewPermissionAlreadyExistsError - returns new PermissionAlreadyExistsError instance.
-func NewPermissionAlreadyExistsError(resourceID, action string) *PermissionAlreadyExistsError {
+func NewPermissionAlreadyExistsError(resourceID, name string) *PermissionAlreadyExistsError {
 	return &PermissionAlreadyExistsError{
 		resourceID: resourceID,
-		action:     action,
+		name:       name,
 	}
 }
 
 // Error - error interface implementation.
 func (e *PermissionAlreadyExistsError) Error() string {
-	return fmt.Sprintf("Permission for action: %s already exists for resource: %s", e.action, e.resourceID)
+	return fmt.Sprintf("Permission with name: %s already exists for resource: %s", e.name, e.resourceID)
 }
 
 // NoAvailablePermissionsError - thrown when no Permissions are available for given role.
@@ -93,6 +93,64 @@ func NewNoAvailablePermissionsError(roleID string) *NoAvailablePermissionsError 
 // Error - error interface implementation.
 func (e *NoAvailablePermissionsError) Error() string {
 	return fmt.Sprintf("No permissions are available for role: %s", e.roleID)
+}
+
+// MissingPermissionNameError - thrown when Permission without a Name is being added
+// or loaded.
+type MissingPermissionNameError struct {
+	permission *Permission
+}
+
+// NewMissingPermissionNameError - returns new MissingPermissionNameError instance.
+func NewMissingPermissionNameError(permission *Permission) *MissingPermissionNameError {
+	return &MissingPermissionNameError{
+		permission: permission,
+	}
+}
+
+// Error - error interface implementation.
+func (e *MissingPermissionNameError) Error() string {
+	return fmt.Sprintf("Permission without a name cannot be created")
+}
+
+// FailedPermission - returns Permission that could not be created due to missing name.
+func (e *MissingPermissionNameError) FailedPermission() *Permission {
+	return e.permission
+}
+
+// PermissionPresetNotFound - thrown when Permission specifies preset which is not
+// defined in PermissionPresets on PolicyDefinition.
+type PermissionPresetNotFoundError struct {
+	name string
+}
+
+// NewPPermissionPresetNotFoundError - returns new PermissionPresetNotFoundError instance.
+func NewPermissionPresetNotFoundError(name string) *PermissionPresetNotFoundError {
+	return &PermissionPresetNotFoundError{
+		name: name,
+	}
+}
+
+// Error - error interface implementation.
+func (e *PermissionPresetNotFoundError) Error() string {
+	return fmt.Sprintf("Permission preset: %s has not been found.", e.name)
+}
+
+// PermissionPresetAlreadyExistsError - thrown when new Permission preset is being added
+// with a name (key) that already exists.
+type PermissionPresetAlreadyExistsError struct {
+	name string
+}
+
+// NewPermissionPresetAlreadyExistsError - returns new PermissionPresetAlreadyExistsError instance.
+func NewPermissionPresetAlreadyExistsError(name string) *PermissionPresetAlreadyExistsError {
+	return &PermissionPresetAlreadyExistsError{
+		name: name,
+	}
+}
+
+func (e *PermissionPresetAlreadyExistsError) Error() string {
+	return fmt.Sprintf("Permission preset with name: %s already exists", e.name)
 }
 
 // AccessDeniedError - thrown when AccessRequest could not be satisfied due to

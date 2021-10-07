@@ -1,5 +1,3 @@
 .vscode
 
-playground_test.go
-test_policy.json
-main.go
+rules.txt

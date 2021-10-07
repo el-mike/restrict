@@ -23,15 +23,14 @@ type PolicyManager struct {
 // NewPolicyManager - returns new PolicyManager instance and loads PolicyDefinition
 // using passed StorageAdapter.
 func NewPolicyManager(adapter StorageAdapter, autoUpdate bool) (*PolicyManager, error) {
-	policy, err := adapter.LoadPolicy()
-	if err != nil {
-		return nil, err
-	}
-
 	manager := &PolicyManager{
 		adapter:    adapter,
 		autoUpdate: autoUpdate,
-		policy:     policy,
+	}
+
+	// Load and initialize the policy.
+	if err := manager.LoadPolicy(); err != nil {
+		return nil, err
 	}
 
 	return manager, nil
@@ -51,6 +50,41 @@ func (pm *PolicyManager) LoadPolicy() error {
 
 	pm.policy = policy
 
+	if err := pm.ApplyPresets(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ApplyPresets - applies defined presets to Permissions that are not yet merged.
+func (pm *PolicyManager) ApplyPresets() error {
+	// For every Role, iterate over all Permissions for given Resource and
+	// merge Permission with it's preset if defined.
+	for _, role := range pm.policy.Roles {
+		for _, grants := range role.Grants {
+			for _, permission := range grants {
+				if permission.Preset != "" {
+					return pm.ApplyPreset(permission)
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func (pm *PolicyManager) ApplyPreset(permission *Permission) error {
+	permissionPreset := pm.policy.PermissionPresets[permission.Preset]
+
+	// If given preset does not exist, return an error.
+	if permissionPreset == nil {
+		return NewPermissionPresetNotFoundError(permission.Preset)
+	}
+
+	// Otherwise, merge found preset into Permission.
+	permission.MergePreset(permissionPreset)
+
 	return nil
 }
 
@@ -66,6 +100,14 @@ func (pm *PolicyManager) GetPolicy() *PolicyDefinition {
 	defer pm.RUnlock()
 
 	return pm.policy
+}
+
+// GetPermissionPresets - returns a map of Permission presets defined in PolicyDefinition.
+func (pm *PolicyManager) GetPermissionPresets() *PermissionPresets {
+	pm.RLock()
+	defer pm.RUnlock()
+
+	return &pm.policy.PermissionPresets
 }
 
 // GetRole - returns a Role with given ID from currently loaded PolicyDefiniton.
@@ -95,6 +137,11 @@ func (pm *PolicyManager) AddRole(role *Role) error {
 
 	pm.policy.Roles[role.ID] = role
 
+	// Since new Permissions with presets could be added, run ApplyPresets.
+	if err := pm.ApplyPresets(); err != nil {
+		return err
+	}
+
 	if pm.autoUpdate {
 		return pm.adapter.SavePolicy(pm.policy)
 	}
@@ -114,6 +161,11 @@ func (pm *PolicyManager) UpdateRole(role *Role) error {
 	}
 
 	pm.policy.Roles[role.ID] = role
+
+	// Since new Permissions with presets could be added, run ApplyPresets.
+	if err := pm.ApplyPresets(); err != nil {
+		return err
+	}
 
 	if pm.autoUpdate {
 		return pm.adapter.SavePolicy(pm.policy)
@@ -146,10 +198,8 @@ func (pm *PolicyManager) DeleteRole(roleID string) error {
 		pm.policy.Roles = Roles{}
 	}
 
-	roleToDelete := pm.getRole(roleID)
-
 	// If Role with given ID does not exist, return an error.
-	if roleToDelete == nil {
+	if r := pm.getRole(roleID); r == nil {
 		return NewRoleNotFoundError(roleID)
 	}
 
@@ -168,6 +218,11 @@ func (pm *PolicyManager) AddPermission(roleID, resourceID string, permission *Pe
 	pm.Lock()
 	defer pm.Unlock()
 
+	// If name for new Permission could not be resolved, return an error.
+	if err := permission.ResolveName(); err != nil {
+		return err
+	}
+
 	role := pm.getRole(roleID)
 	// If role does not exist, return an error.
 	if role == nil {
@@ -176,13 +231,20 @@ func (pm *PolicyManager) AddPermission(roleID, resourceID string, permission *Pe
 
 	pm.ensurePermissionsArray(role, resourceID)
 
-	// If there is already a permission with given action for given resource,
+	// If there is already a permission with given name for given resource,
 	// return an error.
-	if p := pm.getPermission(role.ID, resourceID, permission.Action); p != nil {
-		return NewPermissionAlreadyExistsError(resourceID, permission.Action)
+	if p := pm.getPermission(role.ID, resourceID, permission.Name); p != nil {
+		return NewPermissionAlreadyExistsError(resourceID, permission.Name)
 	}
 
 	role.Grants[resourceID] = append(role.Grants[resourceID], permission)
+
+	// If added Permission has preset defined, apply it immediately.
+	if permission.Preset != "" {
+		if err := pm.ApplyPreset(permission); err != nil {
+			return err
+		}
+	}
 
 	if pm.autoUpdate {
 		return pm.adapter.SavePolicy(pm.policy)
@@ -197,6 +259,11 @@ func (pm *PolicyManager) UpdatePermission(roleID, resourceID string, permission 
 	pm.Lock()
 	defer pm.Unlock()
 
+	// If name for new Permission could not be resolved, return an error.
+	if err := permission.ResolveName(); err != nil {
+		return err
+	}
+
 	role := pm.getRole(roleID)
 	// If role does not exist, return an error.
 	if role == nil {
@@ -205,14 +272,14 @@ func (pm *PolicyManager) UpdatePermission(roleID, resourceID string, permission 
 
 	pm.ensurePermissionsArray(role, resourceID)
 
-	if p := pm.getPermission(role.ID, resourceID, permission.Action); p == nil {
-		return NewPermissionNotFoundError(resourceID, permission.Action)
+	if p := pm.getPermission(role.ID, resourceID, permission.Name); p == nil {
+		return NewPermissionNotFoundError(resourceID, permission.Name)
 	}
 
 	index := -1
 
 	for i, perm := range role.Grants[resourceID] {
-		if perm.Action == permission.Action {
+		if perm.Name == permission.Name {
 			index = i
 			break
 		}
@@ -220,6 +287,11 @@ func (pm *PolicyManager) UpdatePermission(roleID, resourceID string, permission 
 
 	if index >= 0 {
 		role.Grants[resourceID][index] = permission
+	}
+
+	// If updated Permission has preset defined, apply it immediately.
+	if err := pm.ApplyPreset(permission); err != nil {
+		return err
 	}
 
 	if pm.autoUpdate {
@@ -243,10 +315,10 @@ func (pm *PolicyManager) UpsertPermission(roleID, resourceID string, permission 
 	return nil
 }
 
-// DeletePermission - removes a Permission with given action for Role and resource with
+// DeletePermission - removes a Permission with given name for Role and resource with
 // passed IDs.
 // Saves with StorageAdapter if autoUpdate is set to true.
-func (pm *PolicyManager) DeletePermission(roleID, resourceID, action string) error {
+func (pm *PolicyManager) DeletePermission(roleID, resourceID, name string) error {
 	pm.Lock()
 	defer pm.Unlock()
 
@@ -261,7 +333,7 @@ func (pm *PolicyManager) DeletePermission(roleID, resourceID, action string) err
 	index := -1
 
 	for i, permission := range role.Grants[resourceID] {
-		if permission.Action == action {
+		if permission.Name == name {
 			index = i
 			break
 		}
@@ -276,6 +348,90 @@ func (pm *PolicyManager) DeletePermission(roleID, resourceID, action string) err
 
 		role.Grants[resourceID] = newGrants
 	}
+
+	if pm.autoUpdate {
+		return pm.adapter.SavePolicy(pm.policy)
+	}
+
+	return nil
+}
+
+// AddPermissionPreset - adds new Permission preset to PolicyDefinition.
+// Saves with StorageAdapter if autoUpdate is set to true.
+func (pm *PolicyManager) AddPermissionPreset(permission *Permission) error {
+	pm.Lock()
+	defer pm.Unlock()
+
+	// If name for new Permission preset could not be resolved, return an error.
+	if err := permission.ResolveName(); err != nil {
+		return err
+	}
+
+	// If there is already a preset with given name, return an error.
+	if p := pm.getPermissionPreset(permission.Name); p != nil {
+		return NewPermissionPresetAlreadyExistsError(permission.Name)
+	}
+
+	pm.policy.PermissionPresets[permission.Name] = permission
+
+	if pm.autoUpdate {
+		return pm.adapter.SavePolicy(pm.policy)
+	}
+
+	return nil
+}
+
+// UpdatePermissionPreset - updates a Permission preeset in PolicyDefinition.
+// Saves with StorageAdapter if autoUpdate is set to true.
+func (pm *PolicyManager) UpdatePermissionPreset(permission *Permission) error {
+	pm.Lock()
+	defer pm.Unlock()
+
+	// If name for new Permission preset could not be resolved, return an error.
+	if err := permission.ResolveName(); err != nil {
+		return err
+	}
+
+	// If there is no preset with given name, return an error.
+	if p := pm.getPermissionPreset(permission.Name); p == nil {
+		return NewPermissionPresetNotFoundError(permission.Name)
+	}
+
+	pm.policy.PermissionPresets[permission.Name] = permission
+
+	if pm.autoUpdate {
+		return pm.adapter.SavePolicy(pm.policy)
+	}
+
+	return nil
+}
+
+// UpsertPermissionPreset - updates Permission preset if exists, add a new otherwise.
+// Saves with StorageAdapter if autoUpdate is set to true.
+func (pm *PolicyManager) UpsertPermissionPreset(permission *Permission) error {
+	if err := pm.UpdatePermissionPreset(permission); err != nil {
+		if _, ok := err.(*PermissionPresetNotFoundError); ok {
+			return pm.AddPermissionPreset(permission)
+		}
+
+		return err
+	}
+
+	return nil
+}
+
+// DeletePermissionPreset - removes Permission preset with given name.
+// Saves with StorageAdapter if autoUpdate is set to true.
+func (pm *PolicyManager) DeletePermissionPreset(name string) error {
+	pm.Lock()
+	defer pm.Unlock()
+
+	// If there is no preset with given name, return an error.
+	if p := pm.getPermissionPreset(name); p == nil {
+		return NewPermissionPresetNotFoundError(name)
+	}
+
+	delete(pm.policy.PermissionPresets, name)
 
 	if pm.autoUpdate {
 		return pm.adapter.SavePolicy(pm.policy)
@@ -317,14 +473,25 @@ func (pm *PolicyManager) getRole(roleID string) *Role {
 	return role
 }
 
-// getPermission - helper function for getting a Permission with given action
+// getPermission - helper function for getting a Permission with given name
 // under resource and Role with passed IDs.
-func (pm *PolicyManager) getPermission(roleID string, resourceID string, action string) *Permission {
+func (pm *PolicyManager) getPermission(roleID string, resourceID string, name string) *Permission {
 	for _, permission := range pm.policy.Roles[roleID].Grants[resourceID] {
-		if permission.Action == action {
+		if permission.Name == name {
 			return permission
 		}
 	}
 
 	return nil
+}
+
+// getPermissionPreset - helper function for getting Permission preset from PolicyDefinition.
+func (pm *PolicyManager) getPermissionPreset(name string) *Permission {
+	preset, ok := pm.policy.PermissionPresets[name]
+
+	if !ok {
+		return nil
+	}
+
+	return preset
 }
