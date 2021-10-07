@@ -2,8 +2,6 @@
 // authorization model.
 package restrict
 
-import "fmt"
-
 // AccessManager - manages all of the defined Permissions and Roles,
 // provides an interface to perform authorization checks and add/remove
 // Permissions and Roles.
@@ -28,11 +26,8 @@ func (am *AccessManager) IsGranted(request *AccessRequest) error {
 		return err
 	}
 
-	presets := am.policyManager.GetPermissionPresets()
 	grants := role.Grants[request.Resource]
 	parents := role.Parents
-
-	fmt.Print(presets)
 
 	// If given role has no permissions granted, and no parents to
 	// fall back on, return an error.
