@@ -26,7 +26,7 @@ func (am *AccessManager) IsGranted(request *AccessRequest) error {
 		return err
 	}
 
-	grants := role.Grants[request.Resource]
+	grants := role.Grants[request.ResourceID]
 	parents := role.Parents
 
 	// If given role has no permissions granted, and no parents to

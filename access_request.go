@@ -3,8 +3,10 @@ package restrict
 type Context map[string]interface{}
 
 type AccessRequest struct {
-	Role     string
-	Resource string
-	Actions  []string
-	Context  Context
+	Role       string
+	ResourceID string
+	Actions    []string
+	Subject    interface{}
+	Resource   interface{}
+	Context    Context
 }
