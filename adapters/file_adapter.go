@@ -9,10 +9,13 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// AllowedFileType - alias type for describing allowed file types.
 type AllowedFileType string
 
 const (
+	// JSONFile - JSON file type.
 	JSONFile AllowedFileType = "JSONFile"
+	// YAMLFile - YAML file type.
 	YAMLFile AllowedFileType = "YAMLFile"
 )
 

@@ -74,6 +74,7 @@ func (pm *PolicyManager) ApplyPresets() error {
 	return nil
 }
 
+// ApplyPreset - applies defined preset to Permission.
 func (pm *PolicyManager) ApplyPreset(permission *Permission) error {
 	permissionPreset := pm.policy.PermissionPresets[permission.Preset]
 
@@ -301,7 +302,7 @@ func (pm *PolicyManager) UpdatePermission(roleID, resourceID string, permission 
 	return nil
 }
 
-// UpsertRole - updates a Permission if exists for given resource, adds new Permission otherwise.
+// UpsertPermission - updates a Permission if exists for given resource, adds new Permission otherwise.
 // Saves with StorageAdapter if autoUpdate is set to true.
 func (pm *PolicyManager) UpsertPermission(roleID, resourceID string, permission *Permission) error {
 	if err := pm.UpdatePermission(roleID, resourceID, permission); err != nil {

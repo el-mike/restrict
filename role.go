@@ -1,5 +1,6 @@
 package restrict
 
+// GrantsMap - alias type for map of Permission slices.
 type GrantsMap map[string][]*Permission
 
 // Role - a set of granted permissions, that can be
@@ -11,4 +12,5 @@ type Role struct {
 	Parents     []string  `json:"parents,omitempty" yaml:"parents,omitempty"`
 }
 
+// Roles - alias type for map of Roles.
 type Roles map[string]*Role

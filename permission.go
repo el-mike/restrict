@@ -51,7 +51,7 @@ func (p *Permission) UnmarshalJSON(jsonData []byte) error {
 	return nil
 }
 
-// UnmarshalJSON - implementation of yaml.Marshaler.UnmarshalJSON, for creating Permission
+// UnmarshalYAML - implementation of yaml.Marshaler.UnmarshalYAML, for creating Permission
 // object from YAML. It takes care of initializating empty Conditions map.
 func (p *Permission) UnmarshalYAML(value *yaml.Node) error {
 	var perm = marshalablePermission{
