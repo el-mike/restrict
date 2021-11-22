@@ -1,5 +1,6 @@
 package restrict
 
+// PermissionPresets - alias type for map of Permission pointers.
 type PermissionPresets map[string]*Permission
 
 // PolicyDefinition - describes a model of roles and grants that
@@ -7,6 +8,4 @@ type PermissionPresets map[string]*Permission
 type PolicyDefinition struct {
 	PermissionPresets PermissionPresets `json:"permissionPresets" yaml:"permissionPresets"`
 	Roles             Roles             `json:"roles" yaml:"roles"`
-	IdentityField     string            `json:"identityField" yaml:"identityField"`
-	OwnershipField    string            `json:"ownershipField" yaml:"ownershipField"`
 }

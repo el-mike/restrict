@@ -9,4 +9,5 @@ const (
 	CRUD   string = "crud"   // CRUD - action encompassing all CRUD actions.
 )
 
+// Actions - alias type for a slice of Actions.
 type Actions []string

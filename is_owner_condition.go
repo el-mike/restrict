@@ -1,40 +1,36 @@
 package restrict
 
-import (
-	"reflect"
+// IsOwnerConditionName - IsOwnerCondition's identifier.
+const IsOwnerConditionName string = "IS_OWNER"
 
-	"github.com/el-Mike/restrict/utils"
-)
-
-const IS_OWNER_CONDITION_NAME string = "IS_OWNER"
-
-type IsOwnerCondition struct {
-	IdentityField  string `json:"identityField,omitempty" yaml:"identityField,omitempty"`
-	OwnershipField string `json:"owhershipField,omitempty" yaml:"owhershipField,omitempty"`
-}
+// IsOwnerCondition - Condition for testing whether given Subject is an owner of given Resource.
+// Subject and Resource need to implement IdentifiableSubject and OwnableResource interfaces
+// respectively.
+type IsOwnerCondition struct{}
 
 // Name - returns Condition's name.
 func (c *IsOwnerCondition) Name() string {
-	return IS_OWNER_CONDITION_NAME
+	return IsOwnerConditionName
 }
 
-func (c *IsOwnerCondition) Check(value interface{}, request *AccessRequest) bool {
+// Check - returns true if Condition is satisfied, false otherwise.
+func (c *IsOwnerCondition) Check(_ interface{}, request *AccessRequest) bool {
 	subjectObject := request.Subject
 	resourceObject := request.Resource
 
-	if !utils.IsStruct(subjectObject) || !utils.IsStruct(resourceObject) {
+	if subjectObject == nil || resourceObject == nil {
 		return false
 	}
 
-	subject := reflect.ValueOf(subjectObject).Elem().FieldByName(c.IdentityField)
-	if !subject.IsValid() {
+	subject, ok := subjectObject.(IdentifiableSubject)
+	if !ok {
 		return false
 	}
 
-	resourceOwner := reflect.ValueOf(resourceObject).Elem().FieldByName(c.OwnershipField)
-	if !resourceOwner.IsValid() {
+	resource, ok := resourceObject.(OwnableResource)
+	if !ok {
 		return false
 	}
 
-	return subject.String() == resourceOwner.String()
+	return subject.GetId() == resource.GetOwner()
 }

@@ -118,13 +118,13 @@ func (e *MissingPermissionNameError) FailedPermission() *Permission {
 	return e.permission
 }
 
-// PermissionPresetNotFound - thrown when Permission specifies preset which is not
+// PermissionPresetNotFoundError - thrown when Permission specifies preset which is not
 // defined in PermissionPresets on PolicyDefinition.
 type PermissionPresetNotFoundError struct {
 	name string
 }
 
-// NewPPermissionPresetNotFoundError - returns new PermissionPresetNotFoundError instance.
+// NewPermissionPresetNotFoundError - returns new PermissionPresetNotFoundError instance.
 func NewPermissionPresetNotFoundError(name string) *PermissionPresetNotFoundError {
 	return &PermissionPresetNotFoundError{
 		name: name,
@@ -173,7 +173,30 @@ func (e *AccessDeniedError) Error() string {
 	return fmt.Sprintf("Access denied for action: %s", e.action)
 }
 
-// FailedRequest - returns AccessRequest for which access has been denied.
+// FailedRequest - returns an AccessRequest for which access has been denied.
 func (e *AccessDeniedError) FailedRequest() *AccessRequest {
+	return e.request
+}
+
+// RequestMalformedError - thrown when AccessRequest is no correct or
+// does not contain all neccessary information.
+type RequestMalformedError struct {
+	request *AccessRequest
+}
+
+// NewRequestMalformedError - returns new SubjectNotDefinedError instance.
+func NewRequestMalformedError(request *AccessRequest) *RequestMalformedError {
+	return &RequestMalformedError{
+		request: request,
+	}
+}
+
+// Error - error interface implementation.
+func (e *RequestMalformedError) Error() string {
+	return fmt.Sprintf("Subject is not defined!")
+}
+
+// FailedRequest - returns an AccessRequest for which access has been denied.
+func (e *RequestMalformedError) FailedRequest() *AccessRequest {
 	return e.request
 }

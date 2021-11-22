@@ -1,12 +1,13 @@
 package restrict
 
+// Context - alias type for map of any values.
 type Context map[string]interface{}
 
+// AccessRequest - describes a Subject's intention to perform some Actions against
+// given Resource.
 type AccessRequest struct {
-	Role       string
-	ResourceID string
-	Actions    []string
-	Subject    interface{}
-	Resource   interface{}
-	Context    Context
+	Subject  Subject
+	Resource Resource
+	Actions  []string
+	Context  Context
 }

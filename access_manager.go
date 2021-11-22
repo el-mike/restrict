@@ -1,4 +1,4 @@
-// restrict package provides lightweight implementation of RBAC
+// Package restrict provides lightweight implementation of RBAC
 // authorization model.
 package restrict
 
@@ -10,7 +10,7 @@ type AccessManager struct {
 	policyManager *PolicyManager
 }
 
-// InitAccessManager - initializes AccessManager with provided PolicyDefinition
+// NewAccessManager - initializes AccessManager with provided PolicyDefinition
 // and sets singleton instance.
 func NewAccessManager(policyManager *PolicyManager) *AccessManager {
 	return &AccessManager{
@@ -19,14 +19,36 @@ func NewAccessManager(policyManager *PolicyManager) *AccessManager {
 }
 
 // IsGranted - checks if given AccessRequest can be satsified given currently loaded policy.
-// Returns error if access is not granted or any other problem occured, nil otherwise.
+// Returns error if access is not granted or any other problem occurred, nil otherwise.
 func (am *AccessManager) IsGranted(request *AccessRequest) error {
-	role, err := am.policyManager.GetRole(request.Role)
+	if request.Subject == nil || request.Resource == nil {
+		return NewRequestMalformedError(request)
+	}
+
+	_, ok := request.Subject.(Subject)
+	if !ok {
+		return nil
+	}
+
+	roleName := request.Subject.GetRole()
+	resourceName := request.Resource.GetResourceName()
+
+	if roleName == "" || resourceName == "" {
+		return NewRequestMalformedError(request)
+	}
+
+	return am.isGranted(request, roleName, resourceName)
+}
+
+// isGranted - helper function for decoupling role and resource names retrieval from
+// recursive search.
+func (am *AccessManager) isGranted(request *AccessRequest, roleName, resourceName string) error {
+	role, err := am.policyManager.GetRole(roleName)
 	if err != nil {
 		return err
 	}
 
-	grants := role.Grants[request.ResourceID]
+	grants := role.Grants[resourceName]
 	parents := role.Parents
 
 	// If given role has no permissions granted, and no parents to
@@ -43,13 +65,12 @@ func (am *AccessManager) IsGranted(request *AccessRequest) error {
 		if !granted && len(parents) > 0 {
 			for _, parent := range parents {
 				parentRequest := &AccessRequest{
-					Role:     parent,
 					Resource: request.Resource,
 					Actions:  []string{action},
 					Context:  request.Context,
 				}
 
-				if err := am.IsGranted(parentRequest); err != nil {
+				if err := am.isGranted(parentRequest, parent, resourceName); err != nil {
 					switch err.(type) {
 					// If the returned error is one of the below, it just means that
 					// access has been denied for some reason.
