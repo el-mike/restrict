@@ -179,7 +179,7 @@ func (e *AccessDeniedError) FailedRequest() *AccessRequest {
 }
 
 // RequestMalformedError - thrown when AccessRequest is no correct or
-// does not contain all neccessary information.
+// does not contain all necessary information.
 type RequestMalformedError struct {
 	request *AccessRequest
 }

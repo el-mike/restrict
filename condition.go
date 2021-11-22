@@ -20,7 +20,7 @@ type Condition interface {
 }
 
 // Conditions - alias type for Conditions map.
-type Conditions map[string]Condition
+type Conditions []Condition
 
 // jsonMarshalableCondition - helper type for handling marshaling/unmarshaling
 // of JSON structures.
@@ -38,18 +38,18 @@ type yamlMarshalableCondition struct {
 
 // MarshalJSON - marshals a map of Conditions to JSON data.
 func (cs Conditions) MarshalJSON() ([]byte, error) {
-	result := make(map[string]*jsonMarshalableCondition, len(cs))
+	result := []*jsonMarshalableCondition{}
 
-	for key, condition := range cs {
+	for _, condition := range cs {
 		options, err := json.Marshal(condition)
 		if err != nil {
 			return []byte{}, err
 		}
 
-		result[key] = &jsonMarshalableCondition{
+		result = append(result, &jsonMarshalableCondition{
 			Name:    condition.Name(),
 			Options: json.RawMessage(options),
-		}
+		})
 	}
 
 	return json.Marshal(result)
@@ -57,19 +57,19 @@ func (cs Conditions) MarshalJSON() ([]byte, error) {
 
 // MarshalYAML - marshals a map of Conditions to YAML data.
 func (cs Conditions) MarshalYAML() (interface{}, error) {
-	result := make(map[string]*yamlMarshalableCondition, len(cs))
+	result := []*yamlMarshalableCondition{}
 
-	for key, condition := range cs {
+	for _, condition := range cs {
 		options := yaml.Node{}
 
 		if err := options.Encode(condition); err != nil {
 			return nil, err
 		}
 
-		result[key] = &yamlMarshalableCondition{
+		result = append(result, &yamlMarshalableCondition{
 			Name:    condition.Name(),
 			Options: options,
-		}
+		})
 	}
 
 	output := yaml.Node{}
@@ -87,13 +87,13 @@ func (cs Conditions) UnmarshalJSON(jsonData []byte) error {
 		return errors.New("Cannot unmarshal nil value")
 	}
 
-	var jsonValue map[string]jsonMarshalableCondition
+	var jsonValue []jsonMarshalableCondition
 
 	if err := json.Unmarshal(jsonData, &jsonValue); err != nil {
 		return err
 	}
 
-	for key, jsonCondition := range jsonValue {
+	for _, jsonCondition := range jsonValue {
 		factory := ConditionFactories[jsonCondition.Name]
 
 		if factory == nil {
@@ -108,7 +108,7 @@ func (cs Conditions) UnmarshalJSON(jsonData []byte) error {
 			}
 		}
 
-		cs[key] = condition
+		cs = append(cs, condition)
 	}
 
 	return nil
@@ -120,13 +120,13 @@ func (cs Conditions) UnmarshalYAML(value *yaml.Node) error {
 		return errors.New("Cannot unmarshal nil value")
 	}
 
-	var yamlValue map[string]yamlMarshalableCondition
+	var yamlValue []yamlMarshalableCondition
 
 	if err := value.Decode(&yamlValue); err != nil {
 		return err
 	}
 
-	for key, yamlCondition := range yamlValue {
+	for _, yamlCondition := range yamlValue {
 		// Guard for conditions maps being empty - YAML will still
 		// create a Nodes from them.
 		if yamlCondition.Name == "" {
@@ -147,7 +147,7 @@ func (cs Conditions) UnmarshalYAML(value *yaml.Node) error {
 			}
 		}
 
-		cs[key] = condition
+		cs = append(cs, condition)
 	}
 
 	return nil
