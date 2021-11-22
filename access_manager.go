@@ -18,16 +18,11 @@ func NewAccessManager(policyManager *PolicyManager) *AccessManager {
 	}
 }
 
-// IsGranted - checks if given AccessRequest can be satsified given currently loaded policy.
+// IsGranted - checks if given AccessRequest can be satisfied given currently loaded policy.
 // Returns error if access is not granted or any other problem occurred, nil otherwise.
 func (am *AccessManager) IsGranted(request *AccessRequest) error {
 	if request.Subject == nil || request.Resource == nil {
 		return NewRequestMalformedError(request)
-	}
-
-	_, ok := request.Subject.(Subject)
-	if !ok {
-		return nil
 	}
 
 	roleName := request.Subject.GetRole()
@@ -77,7 +72,7 @@ func (am *AccessManager) isGranted(request *AccessRequest, roleName, resourceNam
 					case *NoAvailablePermissionsError, *AccessDeniedError:
 						granted = false
 
-					// Otherwise, some other problem occured, and we want to propagate
+					// Otherwise, some other problem occurred, and we want to propagate
 					// the exception to the caller.
 					default:
 						return err
@@ -117,8 +112,8 @@ func (am *AccessManager) checkConditions(permission *Permission, request *Access
 		return true
 	}
 
-	for key, condition := range permission.Conditions {
-		if satisfied := condition.Check(request.Context[key], request); !satisfied {
+	for _, condition := range permission.Conditions {
+		if satisfied := condition.Check(request.Context, request); !satisfied {
 			return false
 		}
 	}

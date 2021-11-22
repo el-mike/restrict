@@ -20,7 +20,7 @@ type Permission struct {
 	// Preset allows to extend Permission defined in PolicyDefinition.
 	Preset string `json:"preset,omitempty" yaml:"preset,omitempty"`
 	// ExtendPresetConditions specifies if preset's Conditions should be extended with
-	// Permission's own Conditions, or should they be overriden.
+	// Permission's own Conditions, or should they be overridden.
 	ExtendPresetConditions bool `json:"extendPresetConditions,omitempty" yaml:"extendPresetConditions,omitempty"`
 }
 
