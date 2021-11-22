@@ -3,7 +3,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/el-Mike/gochat)](https://goreportcard.com/report/github.com/el-Mike/restrict)
 ![License](https://img.shields.io/github/license/el-Mike/restrict)
 
-Restrict is a authorization library for Go, build upon PRBAC model. 
+Restrict is a authorization library that provides a simple RBAC model, while allowing to use a more fine-grained access control when needed, similar to ABAC. 
 ## Prerequisites
 
 1. Install [golangci-lint](https://golangci-lint.run/usage/install/)
