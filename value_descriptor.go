@@ -6,20 +6,6 @@ import (
 	"github.com/el-Mike/restrict/utils"
 )
 
-// ValueSource - enum type for source of value for given ValueDescriptor.
-type ValueSource int
-
-const (
-	// SubjectField - value that comes from Subject's field.
-	SubjectField ValueSource = iota
-	// ResourceField - value taht comes from Resource's field.
-	ResourceField
-	// ContextField - value that comes from Context's field.
-	ContextField
-	// Explicit - value set explicitly in PolicyDefinition.
-	Explicit
-)
-
 // ValueDescriptor - describes a value that will be tested in its parent Condition.
 type ValueDescriptor struct {
 	Source ValueSource `json:"source"`

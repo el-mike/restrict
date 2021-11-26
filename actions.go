@@ -1,8 +1,8 @@
 package restrict
 
 const (
-	// Noop - empty action.
-	Noop string = ""
+	// NoopAction - empty action.
+	NoopAction string = ""
 	// Create - action for creating a resource.
 	Create string = "create"
 	// Read - action for reading resource of given type.
