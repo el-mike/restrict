@@ -16,10 +16,10 @@ type Condition interface {
 
 	// Check - returns true if Condition is satisfied by
 	// given request, false otherwise.
-	Check(interface{}, *AccessRequest) bool
+	Check(request *AccessRequest) bool
 }
 
-// Conditions - alias type for Conditions map.
+// Conditions - alias type for Conditions array.
 type Conditions []Condition
 
 // jsonMarshalableCondition - helper type for handling marshaling/unmarshaling
@@ -168,4 +168,15 @@ var ConditionFactories = ConditionFatoriesMap{
 	IsOwnerConditionName: func() Condition {
 		return new(IsOwnerCondition)
 	},
+}
+
+// RegisterConditionFactory - adds a new ConditionFactory under given name. If given name
+// is already taken, an error is returned.
+func RegisterConditionFactory(name string, factory ConditionFactory) error {
+	if ConditionFactories[name] != nil {
+		return NewConditionFactoryAlreadyExistsError(name)
+	}
+
+	ConditionFactories[name] = factory
+	return nil
 }

@@ -200,3 +200,21 @@ func (e *RequestMalformedError) Error() string {
 func (e *RequestMalformedError) FailedRequest() *AccessRequest {
 	return e.request
 }
+
+// ConditionFactoryAlreadyExistsError - thrown when ConditionFactory is being added under a name
+// that's already set in ConditionFactories map.
+type ConditionFactoryAlreadyExistsError struct {
+	conditionName string
+}
+
+// NewConditionFactoryAlreadyExistsError - returns new ConditionFactoryAlreadyExistsError instance.
+func NewConditionFactoryAlreadyExistsError(conditionName string) *ConditionFactoryAlreadyExistsError {
+	return &ConditionFactoryAlreadyExistsError{
+		conditionName: conditionName,
+	}
+}
+
+// Error - error interface implementation.
+func (e *ConditionFactoryAlreadyExistsError) Error() string {
+	return fmt.Sprintf("ConditionFactory for Condition: \"%v\" already exists!", e.conditionName)
+}
