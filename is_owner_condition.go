@@ -14,7 +14,7 @@ func (c *IsOwnerCondition) Name() string {
 }
 
 // Check - returns true if Condition is satisfied, false otherwise.
-func (c *IsOwnerCondition) Check(_ interface{}, request *AccessRequest) bool {
+func (c *IsOwnerCondition) Check(request *AccessRequest) bool {
 	subjectObject := request.Subject
 	resourceObject := request.Resource
 

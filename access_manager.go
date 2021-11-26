@@ -113,7 +113,7 @@ func (am *AccessManager) checkConditions(permission *Permission, request *Access
 	}
 
 	for _, condition := range permission.Conditions {
-		if satisfied := condition.Check(request.Context, request); !satisfied {
+		if satisfied := condition.Check(request); !satisfied {
 			return false
 		}
 	}
