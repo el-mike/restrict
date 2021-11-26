@@ -82,7 +82,7 @@ func (cs Conditions) MarshalYAML() (interface{}, error) {
 }
 
 // UnmarshalJSON - unmarshals a JSON-coded map of Conditions.
-func (cs Conditions) UnmarshalJSON(jsonData []byte) error {
+func (cs *Conditions) UnmarshalJSON(jsonData []byte) error {
 	if cs == nil {
 		return errors.New("Cannot unmarshal nil value")
 	}
@@ -108,14 +108,14 @@ func (cs Conditions) UnmarshalJSON(jsonData []byte) error {
 			}
 		}
 
-		cs = append(cs, condition)
+		*cs = append(*cs, condition)
 	}
 
 	return nil
 }
 
 // UnmarshalYAML - unmarshals a YAML-coded map of Conditions.
-func (cs Conditions) UnmarshalYAML(value *yaml.Node) error {
+func (cs *Conditions) UnmarshalYAML(value *yaml.Node) error {
 	if cs == nil {
 		return errors.New("Cannot unmarshal nil value")
 	}
@@ -147,7 +147,7 @@ func (cs Conditions) UnmarshalYAML(value *yaml.Node) error {
 			}
 		}
 
-		cs = append(cs, condition)
+		*cs = append(*cs, condition)
 	}
 
 	return nil
