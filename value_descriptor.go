@@ -1,8 +1,6 @@
 package restrict
 
 import (
-	"reflect"
-
 	"github.com/el-Mike/restrict/utils"
 )
 
@@ -19,7 +17,11 @@ func (vd *ValueDescriptor) GetValue(request *AccessRequest) interface{} {
 		return vd.Value
 	}
 
-	var source interface{} = nil
+	if vd.Field == "" {
+		return nil
+	}
+
+	var source interface{}
 
 	if vd.Source == SubjectField {
 		source = request.Subject
@@ -37,12 +39,12 @@ func (vd *ValueDescriptor) GetValue(request *AccessRequest) interface{} {
 		return nil
 	}
 
-	if reflect.ValueOf(source).Kind() == reflect.Map {
-		return reflect.ValueOf(source).MapIndex(reflect.ValueOf(vd.Field)).Interface()
+	if utils.IsMap(source) {
+		return utils.GetMapValue(source, vd.Field)
 	}
 
 	if utils.HasField(source, vd.Field) {
-		return reflect.ValueOf(source).Elem().FieldByName(vd.Field).Interface()
+		return utils.GetStructFieldValue(source, vd.Field)
 	}
 
 	return nil

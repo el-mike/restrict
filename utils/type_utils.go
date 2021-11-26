@@ -12,6 +12,22 @@ func IsStruct(value interface{}) bool {
 	return reflect.ValueOf(value).Kind() == reflect.Struct
 }
 
+// IsMap - returns true if argument is a Map, false otherwise.
+func IsMap(value interface{}) bool {
+	return reflect.ValueOf(value).Kind() == reflect.Map
+}
+
+// GetMapValue - returns a value under given key in passed map.
+func GetMapValue(mapValue interface{}, keyValue interface{}) interface{} {
+	rMapValue := reflect.ValueOf(mapValue)
+
+	if rMapValue.Kind() == reflect.Ptr {
+		rMapValue = rMapValue.Elem()
+	}
+
+	return rMapValue.MapIndex(reflect.ValueOf(keyValue)).Interface()
+}
+
 // HasField - returns true if given field exists on passed struct, false otherwise.
 func HasField(value interface{}, fieldName string) bool {
 	rValue := reflect.ValueOf(value)
@@ -25,4 +41,15 @@ func HasField(value interface{}, fieldName string) bool {
 	}
 
 	return rValue.FieldByName(fieldName).IsValid()
+}
+
+// GetStructFieldValue - returns a value under given field in passed struct.
+func GetStructFieldValue(structValue interface{}, fieldName string) interface{} {
+	rStructValue := reflect.ValueOf(structValue)
+
+	if rStructValue.Kind() == reflect.Ptr {
+		rStructValue = rStructValue.Elem()
+	}
+
+	return rStructValue.FieldByName(fieldName).Interface()
 }
