@@ -7,10 +7,3 @@ type Resource interface {
 	// used in PolicyDefinition.
 	GetResourceName() string
 }
-
-// OwnableResource - interface that can be implemented by any resource
-// when its ownership needs to tested in some Condition.
-type OwnableResource interface {
-	// GetOwner - returns a Resource's owner id.
-	GetOwner() SubjectId
-}

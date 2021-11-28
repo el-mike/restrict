@@ -9,10 +9,3 @@ type Subject interface {
 	// GetRole - returns a Subject's role.
 	GetRole() string
 }
-
-// IdentifiableSubject - interface that can be implemented by any entity
-// when its identifier is needed to satisfy required Conditions.
-type IdentifiableSubject interface {
-	// GetId - returns Subject's id.
-	GetId() SubjectId
-}
