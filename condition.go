@@ -164,9 +164,6 @@ var ConditionFactories = ConditionFatoriesMap{
 	IsEqualConditionName: func() Condition {
 		return new(IsEqualCondition)
 	},
-	IsOwnerConditionName: func() Condition {
-		return new(IsOwnerCondition)
-	},
 }
 
 // RegisterConditionFactory - adds a new ConditionFactory under given name. If given name
