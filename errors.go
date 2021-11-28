@@ -17,7 +17,7 @@ func NewRoleNotFoundError(roleID string) *RoleNotFoundError {
 
 // Error - error interface implementation.
 func (e *RoleNotFoundError) Error() string {
-	return fmt.Sprintf("Role with ID: %s has not been found", e.roleID)
+	return fmt.Sprintf("Role with ID: \"%s\" has not been found", e.roleID)
 }
 
 // RoleAlreadyExistsError - thrown when new role is being added with
@@ -35,7 +35,7 @@ func NewRoleAlreadyExistsError(roleID string) *RoleAlreadyExistsError {
 
 // Error - error interface implementation.
 func (e *RoleAlreadyExistsError) Error() string {
-	return fmt.Sprintf("Role with ID: %s already exists", e.roleID)
+	return fmt.Sprintf("Role with ID: \"%s\" already exists", e.roleID)
 }
 
 // PermissionNotFoundError - thrown when there is operation called for a Permission
@@ -55,7 +55,7 @@ func NewPermissionNotFoundError(resourceID, name string) *PermissionNotFoundErro
 
 // Error - error interface implementation.
 func (e *PermissionNotFoundError) Error() string {
-	return fmt.Sprintf("Permission with name: %s dot not exist for resource: %s", e.name, e.resourceID)
+	return fmt.Sprintf("Permission with name: \"%s\" dot not exist for resource: \"%s\"", e.name, e.resourceID)
 }
 
 // PermissionAlreadyExistsError - thrown when new permision is being added
@@ -75,7 +75,7 @@ func NewPermissionAlreadyExistsError(resourceID, name string) *PermissionAlready
 
 // Error - error interface implementation.
 func (e *PermissionAlreadyExistsError) Error() string {
-	return fmt.Sprintf("Permission with name: %s already exists for resource: %s", e.name, e.resourceID)
+	return fmt.Sprintf("Permission with name: \"%s\" already exists for resource: \"%s\"", e.name, e.resourceID)
 }
 
 // NoAvailablePermissionsError - thrown when no Permissions are available for given role.
@@ -92,7 +92,7 @@ func NewNoAvailablePermissionsError(roleID string) *NoAvailablePermissionsError 
 
 // Error - error interface implementation.
 func (e *NoAvailablePermissionsError) Error() string {
-	return fmt.Sprintf("No permissions are available for role: %s", e.roleID)
+	return fmt.Sprintf("No permissions are available for role: \"%s\"", e.roleID)
 }
 
 // MissingPermissionNameError - thrown when Permission without a Name is being added
@@ -133,7 +133,7 @@ func NewPermissionPresetNotFoundError(name string) *PermissionPresetNotFoundErro
 
 // Error - error interface implementation.
 func (e *PermissionPresetNotFoundError) Error() string {
-	return fmt.Sprintf("Permission preset: %s has not been found.", e.name)
+	return fmt.Sprintf("Permission preset: \"%s\" has not been found.", e.name)
 }
 
 // PermissionPresetAlreadyExistsError - thrown when new Permission preset is being added
@@ -150,7 +150,7 @@ func NewPermissionPresetAlreadyExistsError(name string) *PermissionPresetAlready
 }
 
 func (e *PermissionPresetAlreadyExistsError) Error() string {
-	return fmt.Sprintf("Permission preset with name: %s already exists", e.name)
+	return fmt.Sprintf("Permission preset with name: \"%s\" already exists", e.name)
 }
 
 // AccessDeniedError - thrown when AccessRequest could not be satisfied due to
@@ -158,24 +158,31 @@ func (e *PermissionPresetAlreadyExistsError) Error() string {
 type AccessDeniedError struct {
 	action  string
 	request *AccessRequest
+	reason  error
 }
 
 // NewAccessDeniedError - returns new AccessDeniedError instance.
-func NewAccessDeniedError(request *AccessRequest, action string) *AccessDeniedError {
+func NewAccessDeniedError(request *AccessRequest, action string, reason error) *AccessDeniedError {
 	return &AccessDeniedError{
 		request: request,
 		action:  action,
+		reason:  reason,
 	}
 }
 
 // Error - error interface implementation.
 func (e *AccessDeniedError) Error() string {
-	return fmt.Sprintf("Access denied for action: %s", e.action)
+	return fmt.Sprintf("Access denied for action: \"%s\"", e.action)
 }
 
 // FailedRequest - returns an AccessRequest for which access has been denied.
 func (e *AccessDeniedError) FailedRequest() *AccessRequest {
 	return e.request
+}
+
+// Reason - returns underlying reason (an error) for denying the access.
+func (e *AccessDeniedError) Reason() error {
+	return e.reason
 }
 
 // RequestMalformedError - thrown when AccessRequest is no correct or
@@ -217,4 +224,93 @@ func NewConditionFactoryAlreadyExistsError(conditionName string) *ConditionFacto
 // Error - error interface implementation.
 func (e *ConditionFactoryAlreadyExistsError) Error() string {
 	return fmt.Sprintf("ConditionFactory for Condition: \"%v\" already exists!", e.conditionName)
+}
+
+// ConditionFactoryNotFoundError - thrown when ConditionFactory is not found while
+// unmarshaling a Permission.
+type ConditionFactoryNotFoundError struct {
+	conditionName string
+}
+
+// NewConditionFactoryNotFoundError - returns new ConditionFactoryNotFoundError instance.
+func NewConditionFactoryNotFoundError(conditionName string) *ConditionFactoryNotFoundError {
+	return &ConditionFactoryNotFoundError{
+		conditionName: conditionName,
+	}
+}
+
+// Error - error interface implementation.
+func (e *ConditionFactoryNotFoundError) Error() string {
+	return fmt.Sprintf("ConditionFactory not found for Condition: \"%v\"", e.conditionName)
+}
+
+// ValueDescriptorMalformedError - thrown when malformed ValueDescriptor is being resolved.
+type ValueDescriptorMalformedError struct {
+	descriptor ValueDescriptor
+}
+
+// NewValueDescriptorMalformedError - returns new ValueDescriptorMalformedError instance.
+func NewValueDescriptorMalformedError(descriptor *ValueDescriptor) *ValueDescriptorMalformedError {
+	return &ValueDescriptorMalformedError{
+		descriptor: *descriptor,
+	}
+}
+
+// Error - error interface implementation.
+func (e *ValueDescriptorMalformedError) Error() string {
+	return fmt.Sprintf("ValueDescriptor could not be resolved!")
+}
+
+// FailedDescriptor - returns failed ValueDescriptor.
+func (e *ValueDescriptorMalformedError) FailedDescriptor() *ValueDescriptor {
+	return &e.descriptor
+}
+
+// ConditionNotSatisfiedError - thrown when given Condition was not satisfied due to
+// insufficient privileges for given AccessRequest.
+type ConditionNotSatisfiedError struct {
+	condition Condition
+	request   *AccessRequest
+}
+
+// NewConditionNotSatisfiedError - returns new ConditionNotSatisfiedError instance.
+func NewConditionNotSatisfiedError(condition Condition, request *AccessRequest) *ConditionNotSatisfiedError {
+	return &ConditionNotSatisfiedError{
+		condition: condition,
+		request:   request,
+	}
+}
+
+// Error - error interface implementation.
+func (e *ConditionNotSatisfiedError) Error() string {
+	return fmt.Sprintf("Condition: \"%v\" was not satisfied!", e.condition.Name())
+}
+
+// FailedCondition - returns failed Condition.
+func (e *ConditionNotSatisfiedError) FailedCondition() Condition {
+	return e.condition
+}
+
+// FailedRequest - returns failed AccessRequest.
+func (e *ConditionNotSatisfiedError) FailedRequest() *AccessRequest {
+	return e.request
+}
+
+// ActionNotFoundError - thrown when given action grant was not found for given Resource.
+type ActionNotFoundError struct {
+	action       string
+	resourceName string
+}
+
+// NewActionNotFoundError - returns new ActionNotFoundError instance.
+func NewActionNotFoundError(action string, resourceName string) *ActionNotFoundError {
+	return &ActionNotFoundError{
+		action:       action,
+		resourceName: resourceName,
+	}
+}
+
+// Error - error interface implementation.
+func (e *ActionNotFoundError) Error() string {
+	return fmt.Sprintf("Action: \"%v\" was not found for Resource: \"%v\"", e.action, e.resourceName)
 }

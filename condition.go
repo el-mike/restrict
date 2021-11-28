@@ -3,7 +3,6 @@ package restrict
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 
 	"gopkg.in/yaml.v3"
 )
@@ -16,7 +15,7 @@ type Condition interface {
 
 	// Check - returns true if Condition is satisfied by
 	// given request, false otherwise.
-	Check(request *AccessRequest) bool
+	Check(request *AccessRequest) error
 }
 
 // Conditions - alias type for Conditions array.
@@ -97,7 +96,7 @@ func (cs *Conditions) UnmarshalJSON(jsonData []byte) error {
 		factory := ConditionFactories[jsonCondition.Name]
 
 		if factory == nil {
-			return fmt.Errorf("No factory found for Condition: %v", jsonCondition.Name)
+			return NewConditionFactoryNotFoundError(jsonCondition.Name)
 		}
 
 		condition := factory()
@@ -136,7 +135,7 @@ func (cs *Conditions) UnmarshalYAML(value *yaml.Node) error {
 		factory := ConditionFactories[yamlCondition.Name]
 
 		if factory == nil {
-			return fmt.Errorf("No factory found for Condition: %v", yamlCondition.Name)
+			return NewConditionFactoryNotFoundError(yamlCondition.Name)
 		}
 
 		condition := factory()

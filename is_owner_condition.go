@@ -14,23 +14,29 @@ func (c *IsOwnerCondition) Name() string {
 }
 
 // Check - returns true if Condition is satisfied, false otherwise.
-func (c *IsOwnerCondition) Check(request *AccessRequest) bool {
+func (c *IsOwnerCondition) Check(request *AccessRequest) error {
 	subjectObject := request.Subject
 	resourceObject := request.Resource
 
 	if subjectObject == nil || resourceObject == nil {
-		return false
+		return NewConditionNotSatisfiedError(c, request)
 	}
 
 	subject, ok := subjectObject.(IdentifiableSubject)
 	if !ok {
-		return false
+		return NewConditionNotSatisfiedError(c, request)
 	}
 
 	resource, ok := resourceObject.(OwnableResource)
 	if !ok {
-		return false
+		return NewConditionNotSatisfiedError(c, request)
 	}
 
-	return subject.GetId() == resource.GetOwner()
+	isOwner := subject.GetId() == resource.GetOwner()
+
+	if !isOwner {
+		return NewConditionNotSatisfiedError(c, request)
+	}
+
+	return nil
 }

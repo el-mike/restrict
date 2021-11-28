@@ -12,13 +12,13 @@ type ValueDescriptor struct {
 }
 
 // GetValue - returns real value represented by given ValueDescriptor.
-func (vd *ValueDescriptor) GetValue(request *AccessRequest) interface{} {
+func (vd *ValueDescriptor) GetValue(request *AccessRequest) (interface{}, error) {
 	if vd.Source == Explicit {
-		return vd.Value
+		return vd.Value, nil
 	}
 
 	if vd.Field == "" {
-		return nil
+		return nil, NewValueDescriptorMalformedError(vd)
 	}
 
 	var source interface{}
@@ -36,16 +36,16 @@ func (vd *ValueDescriptor) GetValue(request *AccessRequest) interface{} {
 	}
 
 	if source == nil {
-		return nil
+		return nil, NewValueDescriptorMalformedError(vd)
 	}
 
 	if utils.IsMap(source) {
-		return utils.GetMapValue(source, vd.Field)
+		return utils.GetMapValue(source, vd.Field), nil
 	}
 
 	if utils.HasField(source, vd.Field) {
-		return utils.GetStructFieldValue(source, vd.Field)
+		return utils.GetStructFieldValue(source, vd.Field), nil
 	}
 
-	return nil
+	return nil, NewValueDescriptorMalformedError(vd)
 }
