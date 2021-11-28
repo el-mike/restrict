@@ -20,9 +20,22 @@ func (c *IsEqualCondition) Name() string {
 }
 
 // Check - returns true if Condition is satisfied, false otherwise.
-func (c *IsEqualCondition) Check(request *AccessRequest) bool {
-	value := c.Value.GetValue(request)
-	equals := c.Equals.GetValue(request)
+func (c *IsEqualCondition) Check(request *AccessRequest) error {
+	value, err := c.Value.GetValue(request)
+	if err != nil {
+		return err
+	}
 
-	return reflect.DeepEqual(value, equals)
+	equals, err := c.Equals.GetValue(request)
+	if err != nil {
+		return err
+	}
+
+	equal := reflect.DeepEqual(value, equals)
+
+	if !equal {
+		return NewConditionNotSatisfiedError(c, request)
+	}
+
+	return nil
 }

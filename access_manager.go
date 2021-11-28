@@ -53,11 +53,11 @@ func (am *AccessManager) isGranted(request *AccessRequest, roleName, resourceNam
 	}
 
 	for _, action := range request.Actions {
-		granted := am.validateAction(grants, action, request)
+		grantError := am.validateAction(grants, action, request)
 
 		// If access if not granted for given action on current Role, check if
 		// any parent Role can satisfy the request.
-		if !granted && len(parents) > 0 {
+		if grantError != nil && len(parents) > 0 {
 			for _, parent := range parents {
 				parentRequest := &AccessRequest{
 					Resource: request.Resource,
@@ -69,8 +69,11 @@ func (am *AccessManager) isGranted(request *AccessRequest, roleName, resourceNam
 					switch err.(type) {
 					// If the returned error is one of the below, it just means that
 					// access has been denied for some reason.
-					case *NoAvailablePermissionsError, *AccessDeniedError:
-						granted = false
+					case *NoAvailablePermissionsError,
+						*ConditionNotSatisfiedError,
+						*ActionNotFoundError,
+						*AccessDeniedError:
+						grantError = err
 
 					// Otherwise, some other problem occurred, and we want to propagate
 					// the exception to the caller.
@@ -80,14 +83,14 @@ func (am *AccessManager) isGranted(request *AccessRequest, roleName, resourceNam
 				} else {
 					// If .IsGranted call with parent Role has returned nil,
 					// that means the request is satisfied.
-					granted = true
+					grantError = nil
 				}
 			}
 		}
 
 		// If request has not been granted, abort the loop and return an error.
-		if !granted {
-			return NewAccessDeniedError(request, action)
+		if grantError != nil {
+			return NewAccessDeniedError(request, action, grantError)
 		}
 	}
 
@@ -95,28 +98,28 @@ func (am *AccessManager) isGranted(request *AccessRequest, roleName, resourceNam
 }
 
 // hasAction - checks if grants list contains given action.
-func (am *AccessManager) validateAction(permissions []*Permission, action string, request *AccessRequest) bool {
+func (am *AccessManager) validateAction(permissions []*Permission, action string, request *AccessRequest) error {
 	for _, grant := range permissions {
-		if grant.Action == action && am.checkConditions(grant, request) {
-			return true
+		if grant.Action == action {
+			return am.checkConditions(grant, request)
 		}
 	}
 
-	return false
+	return NewActionNotFoundError(action, request.Resource.GetResourceName())
 }
 
-// checkConditions - returns true if all conditions specified for given actions
-// are satisfied, false otherwise.
-func (am *AccessManager) checkConditions(permission *Permission, request *AccessRequest) bool {
+// checkConditions - returns nil if all conditions specified for given actions
+// are satisfied, error otherwise.
+func (am *AccessManager) checkConditions(permission *Permission, request *AccessRequest) error {
 	if permission.Conditions == nil {
-		return true
+		return nil
 	}
 
 	for _, condition := range permission.Conditions {
-		if satisfied := condition.Check(request); !satisfied {
-			return false
+		if err := condition.Check(request); err != nil {
+			return err
 		}
 	}
 
-	return true
+	return nil
 }
