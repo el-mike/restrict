@@ -2,6 +2,7 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/el-Mike/gochat)](https://goreportcard.com/report/github.com/el-Mike/restrict)
 ![License](https://img.shields.io/github/license/el-Mike/restrict)
+[![Tests](https://github.com/el-Mike/restrict/actions/workflows/go.yml/badge.svg?branch=develop)](https://github.com/el-Mike/restrict/actions/workflows/go.yml)
 
 Restrict is a authorization library that provides a simple RBAC model, while allowing to use a more fine-grained access control when needed, similar to ABAC. 
 ## Prerequisites
