@@ -10,8 +10,8 @@ import (
 // Condition - additional requirement that needs to be satisfied
 // to grant given permission.
 type Condition interface {
-	// Name - returns Condition's name, which is it's unique identifier.
-	Name() string
+	// Type - returns Condition's type.
+	Type() string
 
 	// Check - returns true if Condition is satisfied by
 	// given request, false otherwise.
@@ -24,15 +24,15 @@ type Conditions []Condition
 // jsonMarshalableCondition - helper type for handling marshaling/unmarshaling
 // of JSON structures.
 type jsonMarshalableCondition struct {
-	Name    string          `json:"name"`
-	Options json.RawMessage `json:"options"`
+	Type    string          `json:"type"`
+	Options json.RawMessage `json:"options,omitempty"`
 }
 
 // yamlMarshalableCondition - helper type for handling marshaling/unmarshaling
 // of YAML structures.
 type yamlMarshalableCondition struct {
-	Name    string    `yaml:"name"`
-	Options yaml.Node `yaml:"options"`
+	Type    string    `yaml:"type"`
+	Options yaml.Node `yaml:"options,omitempty"`
 }
 
 // MarshalJSON - marshals a map of Conditions to JSON data.
@@ -46,7 +46,7 @@ func (cs Conditions) MarshalJSON() ([]byte, error) {
 		}
 
 		result = append(result, &jsonMarshalableCondition{
-			Name:    condition.Name(),
+			Type:    condition.Type(),
 			Options: json.RawMessage(options),
 		})
 	}
@@ -66,7 +66,7 @@ func (cs Conditions) MarshalYAML() (interface{}, error) {
 		}
 
 		result = append(result, &yamlMarshalableCondition{
-			Name:    condition.Name(),
+			Type:    condition.Type(),
 			Options: options,
 		})
 	}
@@ -93,10 +93,10 @@ func (cs *Conditions) UnmarshalJSON(jsonData []byte) error {
 	}
 
 	for _, jsonCondition := range jsonValue {
-		factory := ConditionFactories[jsonCondition.Name]
+		factory := ConditionFactories[jsonCondition.Type]
 
 		if factory == nil {
-			return NewConditionFactoryNotFoundError(jsonCondition.Name)
+			return NewConditionFactoryNotFoundError(jsonCondition.Type)
 		}
 
 		condition := factory()
@@ -128,14 +128,14 @@ func (cs *Conditions) UnmarshalYAML(value *yaml.Node) error {
 	for _, yamlCondition := range yamlValue {
 		// Guard for conditions maps being empty - YAML will still
 		// create a Nodes from them.
-		if yamlCondition.Name == "" {
+		if yamlCondition.Type == "" {
 			continue
 		}
 
-		factory := ConditionFactories[yamlCondition.Name]
+		factory := ConditionFactories[yamlCondition.Type]
 
 		if factory == nil {
-			return NewConditionFactoryNotFoundError(yamlCondition.Name)
+			return NewConditionFactoryNotFoundError(yamlCondition.Type)
 		}
 
 		condition := factory()
@@ -161,7 +161,7 @@ type ConditionFatoriesMap = map[string]ConditionFactory
 // ConditionFactories - stores a map of functions responsible for
 // creating new Conditions, based on it's names.
 var ConditionFactories = ConditionFatoriesMap{
-	IsEqualConditionName: func() Condition {
+	IsEqualConditionType: func() Condition {
 		return new(IsEqualCondition)
 	},
 }

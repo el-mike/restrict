@@ -5,19 +5,20 @@ import (
 	"reflect"
 )
 
-// IsEqualConditionName - IsEqualCondition's identifier.
-const IsEqualConditionName string = "IS_EQUAL"
+// IsEqualConditionType - IsEqualCondition's identifier.
+const IsEqualConditionType string = "IS_EQUAL"
 
 // IsEqualCondition - Condition for testing whether given value is equal
 // to some other value.
 type IsEqualCondition struct {
+	Name   string           `json:"name,omitempty" yaml:"name,omitempty"`
 	Value  *ValueDescriptor `json:"value,omitempty" yaml:"value,omitempty"`
 	Equals *ValueDescriptor `json:"equals,omitempty" yaml:"equals,omitempty"`
 }
 
 // Name - returns Condition's name.
-func (c *IsEqualCondition) Name() string {
-	return IsEqualConditionName
+func (c *IsEqualCondition) Type() string {
+	return IsEqualConditionType
 }
 
 // Check - returns true if Condition is satisfied, false otherwise.
