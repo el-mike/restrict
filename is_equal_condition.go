@@ -1,6 +1,7 @@
 package restrict
 
 import (
+	"fmt"
 	"reflect"
 )
 
@@ -34,7 +35,7 @@ func (c *IsEqualCondition) Check(request *AccessRequest) error {
 	equal := reflect.DeepEqual(value, equals)
 
 	if !equal {
-		return NewConditionNotSatisfiedError(c, request)
+		return NewConditionNotSatisfiedError(c, request, fmt.Errorf("Values \"%v\" and \"%v\" are not equal", value, equals))
 	}
 
 	return nil

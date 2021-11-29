@@ -172,7 +172,7 @@ func NewAccessDeniedError(request *AccessRequest, action string, reason error) *
 
 // Error - error interface implementation.
 func (e *AccessDeniedError) Error() string {
-	return fmt.Sprintf("Access denied for action: \"%s\"", e.action)
+	return fmt.Sprintf("Access denied for action: \"%s\". Reason: %v", e.action, e.reason.Error())
 }
 
 // FailedRequest - returns an AccessRequest for which access has been denied.
@@ -271,19 +271,25 @@ func (e *ValueDescriptorMalformedError) FailedDescriptor() *ValueDescriptor {
 type ConditionNotSatisfiedError struct {
 	condition Condition
 	request   *AccessRequest
+	reason    error
 }
 
 // NewConditionNotSatisfiedError - returns new ConditionNotSatisfiedError instance.
-func NewConditionNotSatisfiedError(condition Condition, request *AccessRequest) *ConditionNotSatisfiedError {
+func NewConditionNotSatisfiedError(condition Condition, request *AccessRequest, reason error) *ConditionNotSatisfiedError {
 	return &ConditionNotSatisfiedError{
 		condition: condition,
 		request:   request,
+		reason:    reason,
 	}
 }
 
 // Error - error interface implementation.
 func (e *ConditionNotSatisfiedError) Error() string {
-	return fmt.Sprintf("Condition: \"%v\" was not satisfied!", e.condition.Name())
+	return fmt.Sprintf("Condition: \"%v\" was not satisfied! %s", e.condition.Name(), e.reason.Error())
+}
+
+func (e *ConditionNotSatisfiedError) Reason() error {
+	return e.reason
 }
 
 // FailedCondition - returns failed Condition.
