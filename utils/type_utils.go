@@ -1,6 +1,8 @@
 package utils
 
-import "reflect"
+import (
+	"reflect"
+)
 
 // IsSameType - returns true if both arguments are the same type, false otherwise.
 func IsSameType(a, b interface{}) bool {
@@ -25,7 +27,17 @@ func GetMapValue(mapValue interface{}, keyValue interface{}) interface{} {
 		rMapValue = rMapValue.Elem()
 	}
 
-	return rMapValue.MapIndex(reflect.ValueOf(keyValue)).Interface()
+	if rMapValue.Kind() != reflect.Map {
+		return nil
+	}
+
+	value := rMapValue.MapIndex(reflect.ValueOf(keyValue))
+
+	if !value.IsValid() {
+		return nil
+	}
+
+	return value.Interface()
 }
 
 // HasField - returns true if given field exists on passed struct, false otherwise.
@@ -51,5 +63,15 @@ func GetStructFieldValue(structValue interface{}, fieldName string) interface{} 
 		rStructValue = rStructValue.Elem()
 	}
 
-	return rStructValue.FieldByName(fieldName).Interface()
+	if rStructValue.Kind() != reflect.Struct {
+		return nil
+	}
+
+	rValue := rStructValue.FieldByName(fieldName)
+
+	if !rValue.IsValid() || !rValue.CanInterface() {
+		return nil
+	}
+
+	return rValue.Interface()
 }
