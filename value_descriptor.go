@@ -1,6 +1,8 @@
 package restrict
 
 import (
+	"fmt"
+
 	"github.com/el-Mike/restrict/utils"
 )
 
@@ -21,7 +23,7 @@ func (vd *ValueDescriptor) GetValue(request *AccessRequest) (interface{}, error)
 	}
 
 	if vd.Field == "" {
-		return nil, NewValueDescriptorMalformedError(vd)
+		return nil, NewValueDescriptorMalformedError(vd, fmt.Errorf("Field cannot be empty for Source: \"%s\"", vd.Source.String()))
 	}
 
 	var source interface{}
@@ -39,7 +41,7 @@ func (vd *ValueDescriptor) GetValue(request *AccessRequest) (interface{}, error)
 	}
 
 	if source == nil {
-		return nil, NewValueDescriptorMalformedError(vd)
+		return nil, NewValueDescriptorMalformedError(vd, fmt.Errorf("Source could not be find"))
 	}
 
 	if utils.IsMap(source) {
@@ -50,5 +52,5 @@ func (vd *ValueDescriptor) GetValue(request *AccessRequest) (interface{}, error)
 		return utils.GetStructFieldValue(source, vd.Field), nil
 	}
 
-	return nil, NewValueDescriptorMalformedError(vd)
+	return nil, NewValueDescriptorMalformedError(vd, fmt.Errorf("Field \"%s\" does not exist on Source: \"%s\"", vd.Field, vd.Source.String()))
 }

@@ -258,18 +258,25 @@ func (e *ConditionFactoryNotFoundError) Error() string {
 // ValueDescriptorMalformedError - thrown when malformed ValueDescriptor is being resolved.
 type ValueDescriptorMalformedError struct {
 	descriptor ValueDescriptor
+	reason     error
 }
 
 // NewValueDescriptorMalformedError - returns new ValueDescriptorMalformedError instance.
-func NewValueDescriptorMalformedError(descriptor *ValueDescriptor) *ValueDescriptorMalformedError {
+func NewValueDescriptorMalformedError(descriptor *ValueDescriptor, reason error) *ValueDescriptorMalformedError {
 	return &ValueDescriptorMalformedError{
 		descriptor: *descriptor,
+		reason:     reason,
 	}
 }
 
 // Error - error interface implementation.
 func (e *ValueDescriptorMalformedError) Error() string {
-	return fmt.Sprintf("ValueDescriptor could not be resolved!")
+	return fmt.Sprintf("ValueDescriptor could not be resolved! Reason: %s", e.reason.Error())
+}
+
+// Reason - returns underlying reason (an error) of malformed ValueDescriptor.
+func (e *ValueDescriptorMalformedError) Reason() error {
+	return e.reason
 }
 
 // FailedDescriptor - returns failed ValueDescriptor.
@@ -296,7 +303,7 @@ func NewConditionNotSatisfiedError(condition Condition, request *AccessRequest, 
 
 // Error - error interface implementation.
 func (e *ConditionNotSatisfiedError) Error() string {
-	return fmt.Sprintf("Condition: \"%v\" was not satisfied! %s", e.condition.Name(), e.reason.Error())
+	return fmt.Sprintf("Condition: \"%v\" was not satisfied! %s", e.condition.Type(), e.reason.Error())
 }
 
 // Reason - returns underlying reason (an error) of failing Condition.
