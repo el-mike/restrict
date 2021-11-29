@@ -70,7 +70,7 @@ func (vs *ValueSource) UnmarshalJSON(jsonData []byte) error {
 	return nil
 }
 
-// UnmarshalJSON - unmarshals a string into ValueSource.
+// UnmarshalYAML - unmarshals a string into ValueSource.
 func (vs *ValueSource) UnmarshalYAML(value *yaml.Node) error {
 	var sourceName string
 
