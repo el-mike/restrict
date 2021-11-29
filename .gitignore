@@ -1,3 +1,5 @@
 .vscode
 
 rules.txt
+
+**/coverage.out
