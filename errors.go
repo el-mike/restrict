@@ -185,6 +185,17 @@ func (e *AccessDeniedError) Reason() error {
 	return e.reason
 }
 
+// FailedCondition - helper function for retrieving underlying failed Condition.
+func (e *AccessDeniedError) FailedCondition() Condition {
+	if e.reason != nil {
+		if conditionErr, ok := e.reason.(*ConditionNotSatisfiedError); ok {
+			return conditionErr.condition
+		}
+	}
+
+	return nil
+}
+
 // RequestMalformedError - thrown when AccessRequest is no correct or
 // does not contain all necessary information.
 type RequestMalformedError struct {
@@ -288,6 +299,7 @@ func (e *ConditionNotSatisfiedError) Error() string {
 	return fmt.Sprintf("Condition: \"%v\" was not satisfied! %s", e.condition.Name(), e.reason.Error())
 }
 
+// Reason - returns underlying reason (an error) of failing Condition.
 func (e *ConditionNotSatisfiedError) Reason() error {
 	return e.reason
 }

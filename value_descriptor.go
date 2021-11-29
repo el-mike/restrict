@@ -6,9 +6,12 @@ import (
 
 // ValueDescriptor - describes a value that will be tested in its parent Condition.
 type ValueDescriptor struct {
-	Source ValueSource `json:"source"`
-	Field  string      `json:"field"`
-	Value  interface{} `json:"value"`
+	// Source - source of the value, one of the predefined enum type (ValueSource).
+	Source ValueSource `json:"source,omitempty" yaml:"source,omitempty"`
+	// Field - field on the given ValueSource that should hold the value.
+	Field string `json:"field,omitempty" yaml:"field,omitempty"`
+	// Value - explicit value used when defining ValueSource.Explicit as value source.
+	Value interface{} `json:"value,omitempty" yaml:"value,omitempty"`
 }
 
 // GetValue - returns real value represented by given ValueDescriptor.
