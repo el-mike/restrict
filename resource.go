@@ -7,3 +7,21 @@ type Resource interface {
 	// used in PolicyDefinition.
 	GetResourceName() string
 }
+
+// baseResource - Resource implementation, to be used when proper Resource
+// is impossible or not feasible to obtain.
+type baseResource struct {
+	name string
+}
+
+// GetResourceName - Resource interface implementation.
+func (br *baseResource) GetResourceName() string {
+	return br.name
+}
+
+// UseResource - returns baseResource instance.
+func UseResource(name string) *baseResource {
+	return &baseResource{
+		name: name,
+	}
+}

@@ -2,6 +2,8 @@
 // authorization model.
 package restrict
 
+import "fmt"
+
 // AccessManager - manages all of the defined Permissions and Roles,
 // provides an interface to perform authorization checks and add/remove
 // Permissions and Roles.
@@ -18,29 +20,29 @@ func NewAccessManager(policyManager *PolicyManager) *AccessManager {
 	}
 }
 
-// IsGranted - checks if given AccessRequest can be satisfied given currently loaded policy.
+// Authorize - checks if given AccessRequest can be satisfied given currently loaded policy.
 // Returns error if access is not granted or any other problem occurred, nil otherwise.
-func (am *AccessManager) IsGranted(request *AccessRequest) error {
+func (am *AccessManager) Authorize(request *AccessRequest) error {
 	if request.Subject == nil || request.Resource == nil {
-		return NewRequestMalformedError(request)
+		return NewRequestMalformedError(request, fmt.Errorf("Subject or Resource not defined"))
 	}
 
 	roleName := request.Subject.GetRole()
 	resourceName := request.Resource.GetResourceName()
 
 	if roleName == "" || resourceName == "" {
-		return NewRequestMalformedError(request)
+		return NewRequestMalformedError(request, fmt.Errorf("Missing roleName or resourceName"))
 	}
 
-	return am.isGranted(request, roleName, resourceName)
+	return am.authorize(request, roleName, resourceName)
 }
 
-// isGranted - helper function for decoupling role and resource names retrieval from
+// authorize - helper function for decoupling role and resource names retrieval from
 // recursive search.
-func (am *AccessManager) isGranted(request *AccessRequest, roleName, resourceName string) error {
+func (am *AccessManager) authorize(request *AccessRequest, roleName, resourceName string) error {
 	role, err := am.policyManager.GetRole(roleName)
 	if err != nil {
-		return err
+		return NewAccessDeniedError(request, "", err)
 	}
 
 	grants := role.Grants[resourceName]
@@ -53,11 +55,11 @@ func (am *AccessManager) isGranted(request *AccessRequest, roleName, resourceNam
 	}
 
 	for _, action := range request.Actions {
-		grantError := am.validateAction(grants, action, request)
+		authorizeError := am.validateAction(grants, action, request)
 
 		// If access if not granted for given action on current Role, check if
 		// any parent Role can satisfy the request.
-		if grantError != nil && len(parents) > 0 {
+		if authorizeError != nil && len(parents) > 0 {
 			for _, parent := range parents {
 				parentRequest := &AccessRequest{
 					Resource: request.Resource,
@@ -65,7 +67,7 @@ func (am *AccessManager) isGranted(request *AccessRequest, roleName, resourceNam
 					Context:  request.Context,
 				}
 
-				if err := am.isGranted(parentRequest, parent, resourceName); err != nil {
+				if err := am.authorize(parentRequest, parent, resourceName); err != nil {
 					switch err.(type) {
 					// If the returned error is one of the below, it just means that
 					// access has been denied for some reason.
@@ -73,7 +75,7 @@ func (am *AccessManager) isGranted(request *AccessRequest, roleName, resourceNam
 						*ConditionNotSatisfiedError,
 						*ActionNotFoundError,
 						*AccessDeniedError:
-						grantError = err
+						authorizeError = err
 
 					// Otherwise, some other problem occurred, and we want to propagate
 					// the exception to the caller.
@@ -81,16 +83,16 @@ func (am *AccessManager) isGranted(request *AccessRequest, roleName, resourceNam
 						return err
 					}
 				} else {
-					// If .IsGranted call with parent Role has returned nil,
+					// If .Authorize call with parent Role has returned nil,
 					// that means the request is satisfied.
-					grantError = nil
+					authorizeError = nil
 				}
 			}
 		}
 
 		// If request has not been granted, abort the loop and return an error.
-		if grantError != nil {
-			return NewAccessDeniedError(request, action, grantError)
+		if authorizeError != nil {
+			return NewAccessDeniedError(request, action, authorizeError)
 		}
 	}
 
@@ -101,6 +103,10 @@ func (am *AccessManager) isGranted(request *AccessRequest, roleName, resourceNam
 func (am *AccessManager) validateAction(permissions []*Permission, action string, request *AccessRequest) error {
 	for _, grant := range permissions {
 		if grant.Action == action {
+			if request.SkipConditions {
+				return nil
+			}
+
 			return am.checkConditions(grant, request)
 		}
 	}

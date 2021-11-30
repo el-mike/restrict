@@ -16,4 +16,6 @@ type AccessRequest struct {
 	Actions []string
 	// Context - map of any additional values needed while checking Conditions.
 	Context Context
+	// SkipConditions - allows to skip Conditions while checking the access.
+	SkipConditions bool
 }

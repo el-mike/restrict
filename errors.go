@@ -200,18 +200,25 @@ func (e *AccessDeniedError) FailedCondition() Condition {
 // does not contain all necessary information.
 type RequestMalformedError struct {
 	request *AccessRequest
+	reason  error
 }
 
 // NewRequestMalformedError - returns new SubjectNotDefinedError instance.
-func NewRequestMalformedError(request *AccessRequest) *RequestMalformedError {
+func NewRequestMalformedError(request *AccessRequest, reason error) *RequestMalformedError {
 	return &RequestMalformedError{
 		request: request,
+		reason:  reason,
 	}
 }
 
 // Error - error interface implementation.
 func (e *RequestMalformedError) Error() string {
 	return fmt.Sprintf("Subject is not defined!")
+}
+
+// Reason - returns underlying reason (an error) of malformed Request.
+func (e *RequestMalformedError) Reason() error {
+	return e.reason
 }
 
 // FailedRequest - returns an AccessRequest for which access has been denied.
