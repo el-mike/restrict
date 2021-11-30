@@ -42,7 +42,7 @@ func (am *AccessManager) Authorize(request *AccessRequest) error {
 func (am *AccessManager) authorize(request *AccessRequest, roleName, resourceName string) error {
 	role, err := am.policyManager.GetRole(roleName)
 	if err != nil {
-		return NewAccessDeniedError(request, "", err)
+		return err
 	}
 
 	grants := role.Grants[resourceName]
@@ -70,12 +70,12 @@ func (am *AccessManager) authorize(request *AccessRequest, roleName, resourceNam
 				if err := am.authorize(parentRequest, parent, resourceName); err != nil {
 					switch err.(type) {
 					// If the returned error is one of the below, it just means that
-					// access has been denied for some reason.
-					case *NoAvailablePermissionsError,
-						*ConditionNotSatisfiedError,
-						*ActionNotFoundError,
-						*AccessDeniedError:
-						authorizeError = err
+					// access has been denied for some reason. In this case, Error returned for
+					// parent Role should not override original error.
+					case *ConditionNotSatisfiedError,
+						*NoAvailablePermissionsError,
+						*AccessDeniedError,
+						*ActionNotFoundError:
 
 					// Otherwise, some other problem occurred, and we want to propagate
 					// the exception to the caller.
