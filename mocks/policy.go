@@ -1,6 +1,10 @@
 package mocks
 
-import "github.com/el-Mike/restrict"
+import (
+	"fmt"
+
+	"github.com/el-Mike/restrict"
+)
 
 const (
 	BasicRoleName        = "BasicRole"
@@ -56,4 +60,44 @@ func GetBasicPolicy() *restrict.PolicyDefinition {
 
 func GetEmptyPolicy() *restrict.PolicyDefinition {
 	return &restrict.PolicyDefinition{}
+}
+
+func GetBasicPolicyJSONString() string {
+	return fmt.Sprintf(`{
+		"roles": {
+			"%s": {
+				"id": "%s",
+				"description": "Basic role",
+				"grants": {
+					"%s": [
+						{ "action": "%s" },
+						{ "action: "%s" }
+					]
+				}
+			}
+		}
+	}`, BasicRoleName,
+		BasicRoleName,
+		BasicResourceOneName,
+		CreateAction,
+		ReadAction,
+	)
+}
+
+func GetBasicPolicyYAMLString() string {
+	return fmt.Sprintf(`
+		roles:
+			%s:
+				id: %s,
+				description: "Basic role",
+				grants:
+					%s:
+						- action: %s
+						- action: %s
+	`, BasicRoleName,
+		BasicRoleName,
+		BasicResourceOneName,
+		CreateAction,
+		ReadAction,
+	)
 }
