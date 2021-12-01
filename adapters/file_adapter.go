@@ -1,12 +1,7 @@
 package adapters
 
 import (
-	"encoding/json"
-	"errors"
-	"os"
-
 	"github.com/el-Mike/restrict"
-	"gopkg.in/yaml.v3"
 )
 
 // AllowedFileType - alias type for describing allowed file types.
@@ -19,43 +14,64 @@ const (
 	YAMLFile AllowedFileType = "YAMLFile"
 )
 
+// DefaultIndent - default JSON file indentation.
+const DefaultIndent = "\t"
+
+// DefaultFilePerm - default file's perm.
+const DefaultFilePerm FilePerm = 0644
+
 // FileAdapter - policy storage adapter, for handling file storage.
 type FileAdapter struct {
-	FileName string
-	FileType AllowedFileType
+	fileHandler FileReadWriter
+	jsonHandler JSONMarshalUnmarshaler
+	yamlHandler YAMLMarshalUnmarshaler
+
+	fileName   string
+	fileType   AllowedFileType
+	jsonIndent string
 }
 
 // NewFileAdapter - returns new FileAdapter instance.
 func NewFileAdapter(fileName string, fileType AllowedFileType) *FileAdapter {
 	return &FileAdapter{
-		FileName: fileName,
-		FileType: fileType,
+		fileHandler: newDefaultFileHandler(),
+		jsonHandler: newDefaultJSONHandler(),
+		yamlHandler: newDefaultYAMLHandler(),
+
+		fileName:   fileName,
+		fileType:   fileType,
+		jsonIndent: DefaultIndent,
 	}
+}
+
+// SetJsonIndent - allows to set indentation used when marshaling the Policy into JSON.
+func (fa *FileAdapter) SetJSONIndent(indent string) {
+	fa.jsonIndent = indent
 }
 
 // LoadPolicy - loads and returns policy from file specified when creating FileAdapter.
 func (fa *FileAdapter) LoadPolicy() (*restrict.PolicyDefinition, error) {
-	data, err := os.ReadFile(fa.FileName)
+	data, err := fa.fileHandler.ReadFile(fa.fileName)
 	if err != nil {
 		return nil, err
 	}
 
-	if fa.FileType == JSONFile {
+	if fa.fileType == JSONFile {
 		return fa.createFromJSON(data)
 	}
 
-	if fa.FileType == YAMLFile {
+	if fa.fileType == YAMLFile {
 		return fa.createFromYAML(data)
 	}
 
-	return nil, errors.New("File type not supported!")
+	return nil, NewFileTypeNotSupportedError(string(fa.fileType))
 }
 
 // createFromJSON - helper function for creating the policy from JSON data.
 func (fa *FileAdapter) createFromJSON(data []byte) (*restrict.PolicyDefinition, error) {
 	var policy *restrict.PolicyDefinition
 
-	if err := json.Unmarshal(data, &policy); err != nil {
+	if err := fa.jsonHandler.Unmarshal(data, &policy); err != nil {
 		return nil, err
 	}
 
@@ -66,7 +82,7 @@ func (fa *FileAdapter) createFromJSON(data []byte) (*restrict.PolicyDefinition, 
 func (fa *FileAdapter) createFromYAML(data []byte) (*restrict.PolicyDefinition, error) {
 	var policy *restrict.PolicyDefinition
 
-	if err := yaml.Unmarshal(data, &policy); err != nil {
+	if err := fa.yamlHandler.Unmarshal(data, &policy); err != nil {
 		return nil, err
 	}
 
@@ -75,25 +91,25 @@ func (fa *FileAdapter) createFromYAML(data []byte) (*restrict.PolicyDefinition, 
 
 // SavePolicy - saves given policy in file specified when creating FileAdapter.
 func (fa *FileAdapter) SavePolicy(policy *restrict.PolicyDefinition) error {
-	if fa.FileType == JSONFile {
+	if fa.fileType == JSONFile {
 		return fa.saveJSON(policy)
 	}
 
-	if fa.FileType == YAMLFile {
+	if fa.fileType == YAMLFile {
 		return fa.saveYAML(policy)
 	}
 
-	return errors.New("File type not supported!")
+	return NewFileTypeNotSupportedError(string(fa.fileType))
 }
 
 // saveJSON - helper function for saving policy in JSON format.
 func (fa *FileAdapter) saveJSON(policy *restrict.PolicyDefinition) error {
-	json, err := json.MarshalIndent(policy, "", "\t")
+	json, err := fa.jsonHandler.MarshalIndent(policy, "", fa.jsonIndent)
 	if err != nil {
 		return err
 	}
 
-	if err := os.WriteFile(fa.FileName, json, 0644); err != nil {
+	if err := fa.saveFile(json); err != nil {
 		return err
 	}
 
@@ -102,14 +118,19 @@ func (fa *FileAdapter) saveJSON(policy *restrict.PolicyDefinition) error {
 
 // saveYAML - helper function for saving policy in YAML format.
 func (fa *FileAdapter) saveYAML(policy *restrict.PolicyDefinition) error {
-	yaml, err := yaml.Marshal(policy)
+	yaml, err := fa.yamlHandler.Marshal(policy)
 	if err != nil {
 		return err
 	}
 
-	if err := os.WriteFile(fa.FileName, yaml, 0644); err != nil {
+	if err := fa.saveFile(yaml); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+// saveFile - saves content to file.
+func (fa *FileAdapter) saveFile(content []byte) error {
+	return fa.fileHandler.WriteFile(fa.fileName, content, DefaultFilePerm)
 }
