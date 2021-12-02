@@ -1,9 +1,9 @@
-package mocks
+package restrict
 
 import (
 	"fmt"
 
-	"github.com/el-Mike/restrict"
+	"github.com/stretchr/testify/mock"
 )
 
 const (
@@ -20,46 +20,65 @@ const (
 )
 
 type SubjectMock struct {
+	mock.Mock
 	ID string
 }
 
-func (sm *SubjectMock) GetRole() string {
-	return BasicRoleName
+func (m *SubjectMock) GetRole() string {
+	args := m.Called()
+
+	// Note that this is not checking if first argument is string, so "" (empty string)
+	// can be used when we want to test failing GetRole.
+	if args.Get(0) == nil {
+		return BasicRoleName
+	}
+
+	return args.String(0)
 }
 
 type ResourceMock struct {
+	mock.Mock
+
 	ID        string
 	CreatedBy string
 	Type      string
 }
 
-func (rm *ResourceMock) GetResourceName() string {
-	return rm.Type
+func (m *ResourceMock) GetResourceName() string {
+	args := m.Called()
+
+	// Note that this is not checking if first argument is string, so "" (empty string)
+	// can be used when we want to test failing GetResourceName.
+	if args.Get(0) == nil {
+		return m.Type
+	}
+
+	return args.String(0)
 }
 
-func GetBasicRole() *restrict.Role {
-	return &restrict.Role{
+func GetBasicRole() *Role {
+	return &Role{
 		ID:          BasicRoleName,
 		Description: "Basic Role",
-		Grants: restrict.GrantsMap{
+		Grants: GrantsMap{
 			BasicResourceOneName: {
-				&restrict.Permission{Action: CreateAction},
-				&restrict.Permission{Action: ReadAction},
+				&Permission{Action: CreateAction},
+				&Permission{Action: ReadAction},
 			},
 		},
 	}
 }
 
-func GetBasicPolicy() *restrict.PolicyDefinition {
-	return &restrict.PolicyDefinition{
-		Roles: restrict.Roles{
+func GetBasicPolicy() *PolicyDefinition {
+	return &PolicyDefinition{
+		Roles: Roles{
 			BasicRoleName: GetBasicRole(),
 		},
 	}
 }
 
-func GetEmptyPolicy() *restrict.PolicyDefinition {
-	return &restrict.PolicyDefinition{}
+func GetEmptyPolicy() *PolicyDefinition {
+	return &PolicyDefinition{}
 }
 
 func GetBasicPolicyJSONString() string {

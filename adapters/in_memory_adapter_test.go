@@ -3,7 +3,7 @@ package adapters
 import (
 	"testing"
 
-	"github.com/el-Mike/restrict/mocks"
+	"github.com/el-Mike/restrict"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
@@ -17,7 +17,7 @@ func TestInMemoryAdapterSuite(t *testing.T) {
 }
 
 func (s *inMemoryAdapterSuite) TestNewInMemoryAdapter() {
-	testPolicy := mocks.GetBasicPolicy()
+	testPolicy := restrict.GetBasicPolicy()
 
 	adapter := NewInMemoryAdapter(testPolicy)
 
@@ -26,7 +26,7 @@ func (s *inMemoryAdapterSuite) TestNewInMemoryAdapter() {
 }
 
 func (s *inMemoryAdapterSuite) TestLoadPolicy() {
-	testPolicy := mocks.GetBasicPolicy()
+	testPolicy := restrict.GetBasicPolicy()
 
 	adapter := NewInMemoryAdapter(testPolicy)
 
@@ -38,8 +38,8 @@ func (s *inMemoryAdapterSuite) TestLoadPolicy() {
 }
 
 func (s *inMemoryAdapterSuite) TestSavePolicy() {
-	emptyPolicy := mocks.GetEmptyPolicy()
-	testPolicy := mocks.GetBasicPolicy()
+	emptyPolicy := restrict.GetEmptyPolicy()
+	testPolicy := restrict.GetBasicPolicy()
 
 	adapter := NewInMemoryAdapter(emptyPolicy)
 

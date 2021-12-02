@@ -8,13 +8,12 @@ import "fmt"
 // provides an interface to perform authorization checks and add/remove
 // Permissions and Roles.
 type AccessManager struct {
-	// Instance of PolicyManager, responsible for managing currently loaded policy.
-	policyManager *PolicyManager
+	// Instance of PolicyProvider, responsible for providing PolicyDefinition.
+	policyManager PolicyProvider
 }
 
-// NewAccessManager - initializes AccessManager with provided PolicyDefinition
-// and sets singleton instance.
-func NewAccessManager(policyManager *PolicyManager) *AccessManager {
+// NewAccessManager - returns new AccessManager instance.
+func NewAccessManager(policyManager PolicyProvider) *AccessManager {
 	return &AccessManager{
 		policyManager: policyManager,
 	}
@@ -43,6 +42,10 @@ func (am *AccessManager) authorize(request *AccessRequest, roleName, resourceNam
 	role, err := am.policyManager.GetRole(roleName)
 	if err != nil {
 		return err
+	}
+
+	if role.Grants == nil {
+		return NewNoAvailablePermissionsError(role.ID)
 	}
 
 	grants := role.Grants[resourceName]

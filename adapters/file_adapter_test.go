@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/el-Mike/restrict"
-	"github.com/el-Mike/restrict/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
@@ -73,6 +72,7 @@ func (m *yamlHandlerMock) Marshal(in interface{}) ([]byte, error) {
 
 type fileAdapterSuite struct {
 	suite.Suite
+
 	testFileName string
 	testError    error
 }
@@ -164,7 +164,7 @@ func (s *fileAdapterSuite) TestLoadPolicy_ReadFile() {
 
 func (s *fileAdapterSuite) TestLoadPolicy_JSONFile() {
 	// Load with working jsonHandler
-	testData := []byte(mocks.GetBasicPolicyJSONString())
+	testData := []byte(restrict.GetBasicPolicyJSONString())
 
 	testFileHandler := new(fileHandlerMock)
 	testFileHandler.On(
@@ -215,7 +215,7 @@ func (s *fileAdapterSuite) TestLoadPolicy_JSONFile() {
 
 func (s *fileAdapterSuite) TestLoadPolicy_YAMLFile() {
 	// Load with working yamlHandler
-	testData := []byte(mocks.GetBasicPolicyYAMLString())
+	testData := []byte(restrict.GetBasicPolicyYAMLString())
 
 	testFileHandler := new(fileHandlerMock)
 	testFileHandler.On(
@@ -259,7 +259,7 @@ func (s *fileAdapterSuite) TestLoadPolicy_YAMLFile() {
 }
 
 func (s *fileAdapterSuite) TestSavePolicy() {
-	testPolicy := mocks.GetBasicPolicy()
+	testPolicy := restrict.GetBasicPolicy()
 
 	adapter := NewFileAdapter(s.testFileName, "incorrectFileType")
 
@@ -271,9 +271,9 @@ func (s *fileAdapterSuite) TestSavePolicy() {
 
 func (s *fileAdapterSuite) TestSavePolicy_WriteFile() {
 	// Write with working fileHandler
-	testJSONData := []byte(mocks.GetBasicPolicyJSONString())
-	testYAMLData := []byte(mocks.GetBasicPolicyYAMLString())
-	testPolicy := mocks.GetBasicPolicy()
+	testJSONData := []byte(restrict.GetBasicPolicyJSONString())
+	testYAMLData := []byte(restrict.GetBasicPolicyYAMLString())
+	testPolicy := restrict.GetBasicPolicy()
 
 	workingFileHandler := new(fileHandlerMock)
 	workingFileHandler.On(
@@ -338,8 +338,8 @@ func (s *fileAdapterSuite) TestSavePolicy_WriteFile() {
 
 func (s *fileAdapterSuite) TestSavePolicy_JSONFile() {
 	// Save with working jsonHandler
-	testData := []byte(mocks.GetBasicPolicyJSONString())
-	testPolicy := mocks.GetBasicPolicy()
+	testData := []byte(restrict.GetBasicPolicyJSONString())
+	testPolicy := restrict.GetBasicPolicy()
 
 	workingFileHandler := new(fileHandlerMock)
 	workingFileHandler.On(
@@ -395,8 +395,8 @@ func (s *fileAdapterSuite) TestSavePolicy_JSONFile() {
 
 func (s *fileAdapterSuite) TestSavePolicy_YAMLFile() {
 	// Save with working yamlHandler
-	testData := []byte(mocks.GetBasicPolicyYAMLString())
-	testPolicy := mocks.GetBasicPolicy()
+	testData := []byte(restrict.GetBasicPolicyYAMLString())
+	testPolicy := restrict.GetBasicPolicy()
 
 	workingFileHandler := new(fileHandlerMock)
 	workingFileHandler.On(
