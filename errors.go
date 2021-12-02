@@ -328,21 +328,52 @@ func (e *ConditionNotSatisfiedError) FailedRequest() *AccessRequest {
 	return e.request
 }
 
-// ActionNotFoundError - thrown when given action grant was not found for given Resource.
-type ActionNotFoundError struct {
+// PermissionNotGrantedError - thrown when Permission grant for action was not found
+// for given Resource.
+type PermissionNotGrantedError struct {
 	action       string
 	resourceName string
 }
 
-// NewActionNotFoundError - returns new ActionNotFoundError instance.
-func NewActionNotFoundError(action string, resourceName string) *ActionNotFoundError {
-	return &ActionNotFoundError{
+// NewPermissionNotGrantedError - returns new ActionNotFoundError instance.
+func NewPermissionNotGrantedError(action string, resourceName string) *PermissionNotGrantedError {
+	return &PermissionNotGrantedError{
 		action:       action,
 		resourceName: resourceName,
 	}
 }
 
 // Error - error interface implementation.
-func (e *ActionNotFoundError) Error() string {
-	return fmt.Sprintf("Action: \"%v\" was not found for Resource: \"%v\"", e.action, e.resourceName)
+func (e *PermissionNotGrantedError) Error() string {
+	return fmt.Sprintf("Permission for action: \"%v\" is not granted for Resource: \"%v\"", e.action, e.resourceName)
+}
+
+// RoleInheritanceCycleError - thrown when circular inheritance is detected.
+type RoleInheritanceCycleError struct {
+	roles []string
+}
+
+// NewRoleInheritanceCycleError - returns new RoleInheritanceCycleError instance.
+func NewRoleInheritanceCycleError(roles []string) *RoleInheritanceCycleError {
+	return &RoleInheritanceCycleError{
+		roles: roles,
+	}
+}
+
+// Error - error interface implementation.
+func (e *RoleInheritanceCycleError) Error() string {
+	message := fmt.Sprintf("Role inheritance cycle has been detected: ")
+
+	for i, role := range e.roles {
+		if i > 0 {
+			message += " -> "
+		}
+
+		message += fmt.Sprintf("\"%s\"", role)
+	}
+
+	// We want to add the first role at the end, to indicate the cycle.
+	message += fmt.Sprintf(" -> \"%s\"", e.roles[0])
+
+	return message
 }
