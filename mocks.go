@@ -8,6 +8,7 @@ import (
 
 const (
 	BasicRoleName        = "BasicRole"
+	BasicParentRoleName  = "BasicParentRole"
 	BasicResourceOneName = "BasicResourceOne"
 	BasicResourceTwoName = "BasicResourceTwo"
 )
@@ -19,8 +20,12 @@ const (
 	DeleteAction = "delete"
 )
 
+const BasicConditionOne = "BASIC_CONDITION_ONE"
+const BasicConditionTwo = "BASIC_CONDITION_TWO"
+
 type SubjectMock struct {
 	mock.Mock
+
 	ID string
 }
 
@@ -56,6 +61,25 @@ func (m *ResourceMock) GetResourceName() string {
 	return args.String(0)
 }
 
+type ConditionMock struct {
+	mock.Mock
+}
+
+func (m *ConditionMock) Type() string {
+	args := m.Called()
+
+	if args.Get(0) == nil {
+		return BasicConditionOne
+	}
+	return args.String(0)
+}
+
+func (m *ConditionMock) Check(request *AccessRequest) error {
+	args := m.Called()
+
+	return args.Error(0)
+}
+
 func GetBasicRole() *Role {
 	return &Role{
 		ID:          BasicRoleName,
@@ -67,6 +91,16 @@ func GetBasicRole() *Role {
 			},
 		},
 	}
+}
+
+func GetBasicParentRole() *Role {
+	role := GetBasicRole()
+
+	role.ID = BasicParentRoleName
+	role.Description = "Basic Parent Role"
+	role.Grants[BasicResourceOneName] = append(role.Grants[BasicResourceOneName], &Permission{Action: UpdateAction})
+
+	return role
 }
 
 func GetBasicPolicy() *PolicyDefinition {

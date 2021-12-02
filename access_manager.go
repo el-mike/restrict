@@ -33,12 +33,12 @@ func (am *AccessManager) Authorize(request *AccessRequest) error {
 		return NewRequestMalformedError(request, fmt.Errorf("Missing roleName or resourceName"))
 	}
 
-	return am.authorize(request, roleName, resourceName)
+	return am.authorize(request, roleName, resourceName, []string{})
 }
 
 // authorize - helper function for decoupling role and resource names retrieval from
 // recursive search.
-func (am *AccessManager) authorize(request *AccessRequest, roleName, resourceName string) error {
+func (am *AccessManager) authorize(request *AccessRequest, roleName, resourceName string, checkedRoles []string) error {
 	role, err := am.policyManager.GetRole(roleName)
 	if err != nil {
 		return err
@@ -58,11 +58,17 @@ func (am *AccessManager) authorize(request *AccessRequest, roleName, resourceNam
 	}
 
 	for _, action := range request.Actions {
+		if action == "" {
+			return NewRequestMalformedError(request, fmt.Errorf("Action cannot be empty"))
+		}
+
 		authorizeError := am.validateAction(grants, action, request)
 
 		// If access if not granted for given action on current Role, check if
 		// any parent Role can satisfy the request.
 		if authorizeError != nil && len(parents) > 0 {
+			checkedRoles = append(checkedRoles, roleName)
+
 			for _, parent := range parents {
 				parentRequest := &AccessRequest{
 					Resource: request.Resource,
@@ -70,19 +76,17 @@ func (am *AccessManager) authorize(request *AccessRequest, roleName, resourceNam
 					Context:  request.Context,
 				}
 
-				if err := am.authorize(parentRequest, parent, resourceName); err != nil {
-					switch err.(type) {
-					// If the returned error is one of the below, it just means that
-					// access has been denied for some reason. In this case, Error returned for
-					// parent Role should not override original error.
-					case *ConditionNotSatisfiedError,
-						*NoAvailablePermissionsError,
-						*AccessDeniedError,
-						*ActionNotFoundError:
+				// If parent has already been check, we want to return an error - otherwise
+				// this function will fall into infinite loop.
+				if am.isChecked(parent, checkedRoles) {
+					return NewRoleInheritanceCycleError(checkedRoles)
+				}
 
-					// Otherwise, some other problem occurred, and we want to propagate
-					// the exception to the caller.
-					default:
+				if err := am.authorize(parentRequest, parent, resourceName, checkedRoles); err != nil {
+					// If the returned error is not an access error (meaning something not related
+					// to Policy validation happened), we want to return the actual error to the caller.
+					// Otherwise, returned error should not override the original one.
+					if !am.isAccessError(err) {
 						return err
 					}
 				} else {
@@ -102,19 +106,46 @@ func (am *AccessManager) authorize(request *AccessRequest, roleName, resourceNam
 	return nil
 }
 
+// isAccessError - returns true if error is causes by reasons related to Policy validation
+// (Conditions checks, missing Permissions etc.), false otherwise (malformed Policy, reflection errors, etc.)
+func (am *AccessManager) isAccessError(err error) bool {
+	switch err.(type) {
+	case *ConditionNotSatisfiedError,
+		*NoAvailablePermissionsError,
+		*PermissionNotGrantedError,
+		*AccessDeniedError:
+		return true
+
+	default:
+		return false
+	}
+}
+
 // hasAction - checks if grants list contains given action.
 func (am *AccessManager) validateAction(permissions []*Permission, action string, request *AccessRequest) error {
-	for _, grant := range permissions {
-		if grant.Action == action {
-			if request.SkipConditions {
+	var conditionsCheckError error
+
+	for _, permission := range permissions {
+		if permission.Action == action {
+			if permission.Conditions == nil || len(permission.Conditions) == 0 || request.SkipConditions {
 				return nil
 			}
 
-			return am.checkConditions(grant, request)
+			conditionsCheckError = am.checkConditions(permission, request)
+
+			// If error is nil, Conditions have been satisfied. Otherwise, we don't want to
+			// break the loop, as other Permissions can have the same action.
+			if conditionsCheckError == nil {
+				return nil
+			}
 		}
 	}
 
-	return NewActionNotFoundError(action, request.Resource.GetResourceName())
+	if conditionsCheckError != nil {
+		return conditionsCheckError
+	}
+
+	return NewPermissionNotGrantedError(action, request.Resource.GetResourceName())
 }
 
 // checkConditions - returns nil if all conditions specified for given actions
@@ -131,4 +162,15 @@ func (am *AccessManager) checkConditions(permission *Permission, request *Access
 	}
 
 	return nil
+}
+
+// isChecked - returns true if role is in parents slice, false otherwise.
+func (am *AccessManager) isChecked(role string, parents []string) bool {
+	for _, parent := range parents {
+		if role == parent {
+			return true
+		}
+	}
+
+	return false
 }
