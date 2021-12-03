@@ -1,7 +1,10 @@
 package restrict
 
+// Permissions - alias type for slice of Permissions.
+type Permissions []*Permission
+
 // GrantsMap - alias type for map of Permission slices.
-type GrantsMap map[string][]*Permission
+type GrantsMap map[string]Permissions
 
 // Role - a set of granted permissions, that can be
 // assign to a user.
