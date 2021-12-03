@@ -1,5 +1,4 @@
-// Package restrict provides lightweight implementation of RBAC
-// authorization model.
+// Package restrict provides an authorization library, with a hybrid of RBAC and ABAC models.
 package restrict
 
 import "fmt"

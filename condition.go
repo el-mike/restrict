@@ -2,7 +2,6 @@ package restrict
 
 import (
 	"encoding/json"
-	"errors"
 
 	"gopkg.in/yaml.v3"
 )
@@ -20,6 +19,15 @@ type Condition interface {
 
 // Conditions - alias type for Conditions array.
 type Conditions []Condition
+
+// AppendCondition - adds new Condition to Conditions slice.
+func (cs *Conditions) appendCondition(condition Condition) {
+	if cs == nil {
+		cs = &Conditions{}
+	}
+
+	*cs = append(*cs, condition)
+}
 
 // jsonMarshalableCondition - helper type for handling marshaling/unmarshaling
 // of JSON structures.
@@ -42,7 +50,7 @@ func (cs Conditions) MarshalJSON() ([]byte, error) {
 	for _, condition := range cs {
 		options, err := json.Marshal(condition)
 		if err != nil {
-			return []byte{}, err
+			return nil, err
 		}
 
 		result = append(result, &jsonMarshalableCondition{
@@ -82,10 +90,6 @@ func (cs Conditions) MarshalYAML() (interface{}, error) {
 
 // UnmarshalJSON - unmarshals a JSON-coded map of Conditions.
 func (cs *Conditions) UnmarshalJSON(jsonData []byte) error {
-	if cs == nil {
-		return errors.New("Cannot unmarshal nil value")
-	}
-
 	var jsonValue []jsonMarshalableCondition
 
 	if err := json.Unmarshal(jsonData, &jsonValue); err != nil {
@@ -107,7 +111,7 @@ func (cs *Conditions) UnmarshalJSON(jsonData []byte) error {
 			}
 		}
 
-		*cs = append(*cs, condition)
+		cs.appendCondition(condition)
 	}
 
 	return nil
@@ -115,10 +119,6 @@ func (cs *Conditions) UnmarshalJSON(jsonData []byte) error {
 
 // UnmarshalYAML - unmarshals a YAML-coded map of Conditions.
 func (cs *Conditions) UnmarshalYAML(value *yaml.Node) error {
-	if cs == nil {
-		return errors.New("Cannot unmarshal nil value")
-	}
-
 	var yamlValue []yamlMarshalableCondition
 
 	if err := value.Decode(&yamlValue); err != nil {
@@ -146,7 +146,7 @@ func (cs *Conditions) UnmarshalYAML(value *yaml.Node) error {
 			}
 		}
 
-		*cs = append(*cs, condition)
+		cs.appendCondition(condition)
 	}
 
 	return nil
