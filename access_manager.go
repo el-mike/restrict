@@ -63,7 +63,7 @@ func (am *AccessManager) authorize(request *AccessRequest, roleName, resourceNam
 
 		authorizeError := am.validateAction(grants, action, request)
 
-		// If access if not granted for given action on current Role, check if
+		// If access is not granted for given action on current Role, check if
 		// any parent Role can satisfy the request.
 		if authorizeError != nil && len(parents) > 0 {
 			checkedRoles = append(checkedRoles, roleName)
@@ -75,7 +75,7 @@ func (am *AccessManager) authorize(request *AccessRequest, roleName, resourceNam
 					Context:  request.Context,
 				}
 
-				// If parent has already been check, we want to return an error - otherwise
+				// If parent has already been checked, we want to return an error - otherwise
 				// this function will fall into infinite loop.
 				if am.isChecked(parent, checkedRoles) {
 					return NewRoleInheritanceCycleError(checkedRoles)
@@ -105,7 +105,7 @@ func (am *AccessManager) authorize(request *AccessRequest, roleName, resourceNam
 	return nil
 }
 
-// isAccessError - returns true if error is causes by reasons related to Policy validation
+// isAccessError - returns true if error is caused by reasons related to Policy validation
 // (Conditions checks, missing Permissions etc.), false otherwise (malformed Policy, reflection errors, etc.)
 func (am *AccessManager) isAccessError(err error) bool {
 	switch err.(type) {

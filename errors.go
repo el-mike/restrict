@@ -38,46 +38,6 @@ func (e *RoleAlreadyExistsError) Error() string {
 	return fmt.Sprintf("Role with ID: \"%s\" already exists", e.roleID)
 }
 
-// PermissionNotFoundError - thrown when there is operation called for a Permission
-// that does not exist.
-type PermissionNotFoundError struct {
-	resourceID string
-	name       string
-}
-
-// NewPermissionNotFoundError - returns new PermissionNotFoundError instance.
-func NewPermissionNotFoundError(resourceID, name string) *PermissionNotFoundError {
-	return &PermissionNotFoundError{
-		resourceID: resourceID,
-		name:       name,
-	}
-}
-
-// Error - error interface implementation.
-func (e *PermissionNotFoundError) Error() string {
-	return fmt.Sprintf("Permission with name: \"%s\" dot not exist for resource: \"%s\"", e.name, e.resourceID)
-}
-
-// PermissionAlreadyExistsError - thrown when new permision is being added
-// with a name that already exists for given resource.
-type PermissionAlreadyExistsError struct {
-	resourceID string
-	name       string
-}
-
-// NewPermissionAlreadyExistsError - returns new PermissionAlreadyExistsError instance.
-func NewPermissionAlreadyExistsError(resourceID, name string) *PermissionAlreadyExistsError {
-	return &PermissionAlreadyExistsError{
-		resourceID: resourceID,
-		name:       name,
-	}
-}
-
-// Error - error interface implementation.
-func (e *PermissionAlreadyExistsError) Error() string {
-	return fmt.Sprintf("Permission with name: \"%s\" already exists for resource: \"%s\"", e.name, e.resourceID)
-}
-
 // NoAvailablePermissionsError - thrown when no Permissions are available for given role.
 type NoAvailablePermissionsError struct {
 	roleID string
@@ -93,29 +53,6 @@ func NewNoAvailablePermissionsError(roleID string) *NoAvailablePermissionsError 
 // Error - error interface implementation.
 func (e *NoAvailablePermissionsError) Error() string {
 	return fmt.Sprintf("No permissions are available for role: \"%s\"", e.roleID)
-}
-
-// MissingPermissionNameError - thrown when Permission without a Name is being added
-// or loaded.
-type MissingPermissionNameError struct {
-	permission *Permission
-}
-
-// NewMissingPermissionNameError - returns new MissingPermissionNameError instance.
-func NewMissingPermissionNameError(permission *Permission) *MissingPermissionNameError {
-	return &MissingPermissionNameError{
-		permission: permission,
-	}
-}
-
-// Error - error interface implementation.
-func (e *MissingPermissionNameError) Error() string {
-	return fmt.Sprintf("Permission without a name cannot be created")
-}
-
-// FailedPermission - returns Permission that could not be created due to missing name.
-func (e *MissingPermissionNameError) FailedPermission() *Permission {
-	return e.permission
 }
 
 // PermissionPresetNotFoundError - thrown when Permission specifies preset which is not
