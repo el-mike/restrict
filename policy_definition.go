@@ -1,7 +1,7 @@
 package restrict
 
 // PermissionPresets - alias type for map of Permission pointers.
-type PermissionPresets map[string]*Permission
+type PermissionPresets map[string]*PermissionPreset
 
 // PolicyDefinition - describes a model of roles and grants that
 // are defined for the application.

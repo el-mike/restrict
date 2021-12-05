@@ -15,7 +15,7 @@ const (
 	noopValueSource ValueSource = iota
 	// SubjectField - value that comes from Subject's field.
 	SubjectField
-	// ResourceField - value taht comes from Resource's field.
+	// ResourceField - value that comes from Resource's field.
 	ResourceField
 	// ContextField - value that comes from Context's field.
 	ContextField
