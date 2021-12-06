@@ -12,7 +12,7 @@ type ValueDescriptor struct {
 	Source ValueSource `json:"source,omitempty" yaml:"source,omitempty"`
 	// Field - field on the given ValueSource that should hold the value.
 	Field string `json:"field,omitempty" yaml:"field,omitempty"`
-	// Value - explicit value used when defining ValueSource.Explicit as value source.
+	// Value - explicit value taken when using ValueSource.Explicit as value source.
 	Value interface{} `json:"value,omitempty" yaml:"value,omitempty"`
 }
 

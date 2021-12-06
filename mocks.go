@@ -24,7 +24,10 @@ const basicConditionTwo = "BASIC_CONDITION_TWO"
 type subjectMock struct {
 	mock.Mock
 
-	ID string
+	ID         string
+	FieldOne   string
+	FieldTwo   int
+	FieldThree []int
 }
 
 func (m *subjectMock) GetRole() string {
@@ -42,9 +45,12 @@ func (m *subjectMock) GetRole() string {
 type resourceMock struct {
 	mock.Mock
 
-	ID        string
-	CreatedBy string
-	Type      string
+	ID         string
+	CreatedBy  string
+	Type       string
+	FieldOne   string
+	FieldTwo   int
+	FieldThree []int
 }
 
 func (m *resourceMock) GetResourceName() string {
