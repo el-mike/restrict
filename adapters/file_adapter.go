@@ -64,7 +64,7 @@ func (fa *FileAdapter) LoadPolicy() (*restrict.PolicyDefinition, error) {
 		return fa.createFromYAML(data)
 	}
 
-	return nil, NewFileTypeNotSupportedError(string(fa.fileType))
+	return nil, newFileTypeNotSupportedError(string(fa.fileType))
 }
 
 // createFromJSON - helper function for creating the policy from JSON data.
@@ -99,7 +99,7 @@ func (fa *FileAdapter) SavePolicy(policy *restrict.PolicyDefinition) error {
 		return fa.saveYAML(policy)
 	}
 
-	return NewFileTypeNotSupportedError(string(fa.fileType))
+	return newFileTypeNotSupportedError(string(fa.fileType))
 }
 
 // saveJSON - helper function for saving policy in JSON format.
