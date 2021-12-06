@@ -13,7 +13,7 @@ type Condition interface {
 	Type() string
 
 	// Check - returns true if Condition is satisfied by
-	// given request, false otherwise.
+	// given AccessRequest, false otherwise.
 	Check(request *AccessRequest) error
 }
 
@@ -152,14 +152,14 @@ func (cs *Conditions) UnmarshalYAML(value *yaml.Node) error {
 	return nil
 }
 
-// ConditionFactory - factory function for Conditions.
+// ConditionFactory - factory function for Condition.
 type ConditionFactory func() Condition
 
 // ConditionFatoriesMap - map of Condition factories.
 type ConditionFatoriesMap = map[string]ConditionFactory
 
 // ConditionFactories - stores a map of functions responsible for
-// creating new Conditions, based on it's names.
+// creating new Conditions, based on their names.
 var ConditionFactories = ConditionFatoriesMap{
 	IsEqualConditionType: func() Condition {
 		return new(IsEqualCondition)

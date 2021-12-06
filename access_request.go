@@ -1,6 +1,6 @@
 package restrict
 
-// Context - alias type for map of any values.
+// Context - alias type for a map of any values.
 type Context map[string]interface{}
 
 // AccessRequest - describes a Subject's intention to perform some Actions against
@@ -14,7 +14,7 @@ type AccessRequest struct {
 	Resource Resource
 	// Actions - list of operations Subject wants to perform on given Resource.
 	Actions []string
-	// Context - map of any additional values needed while checking Conditions.
+	// Context - map of any additional values needed while checking the access.
 	Context Context
 	// SkipConditions - allows to skip Conditions while checking the access.
 	SkipConditions bool

@@ -68,10 +68,12 @@ func TestConditionsSuite(t *testing.T) {
 }
 
 func (s *conditionsSuite) BeforeTest(_, _ string) {
+	//nolint
 	RegisterConditionFactory(marshalableConditionMockName, func() Condition {
 		return &marshalableConditionMock{}
 	})
 
+	//nolint
 	RegisterConditionFactory(invalidMarshalableConditionMockName, func() Condition {
 		return &invalidMarshalableConditionMock{}
 	})
@@ -128,6 +130,7 @@ func (s *conditionsSuite) TestUnmarshalJSON() {
 
 	assert.IsType(s.T(), new(ConditionFactoryNotFoundError), err)
 
+	//nolint
 	RegisterConditionFactory(marshalableConditionMockName, func() Condition {
 		return &marshalableConditionMock{}
 	})
@@ -152,6 +155,7 @@ func (s *conditionsSuite) TestUnmarshalJSON() {
 }
 
 func (s *conditionsSuite) TestUnmarshalJSON_InvalidData() {
+	//nolint
 	RegisterConditionFactory(marshalableConditionMockName, func() Condition {
 		return &marshalableConditionMock{}
 	})
@@ -213,6 +217,7 @@ func (s *conditionsSuite) TestUnmarshalYAML() {
 
 	assert.IsType(s.T(), new(ConditionFactoryNotFoundError), err)
 
+	//nolint
 	RegisterConditionFactory(marshalableConditionMockName, func() Condition {
 		return &marshalableConditionMock{}
 	})
@@ -250,6 +255,7 @@ func (s *conditionsSuite) TestUnmarshalYAML_InvalidData() {
 }
 
 func (s *conditionsSuite) TestMarshalJSON() {
+	//nolint
 	RegisterConditionFactory(marshalableConditionMockName, func() Condition {
 		return &marshalableConditionMock{}
 	})
@@ -306,6 +312,7 @@ func (s *conditionsSuite) TestMarshalJSON_InvalidCondition() {
 }
 
 func (s *conditionsSuite) TestMarshalYAML() {
+	//nolint
 	RegisterConditionFactory(marshalableConditionMockName, func() Condition {
 		return &marshalableConditionMock{}
 	})

@@ -1,7 +1,7 @@
 package restrict
 
 // Permission - describes an Action that can be performed in regards to
-// some resource, with specified conditions.
+// some Resource, with specified Conditions.
 type Permission struct {
 	// Action that will be allowed to perform if the Permission is granted, and Conditions
 	// are satisfied.
@@ -14,6 +14,12 @@ type Permission struct {
 	// Permission's own Conditions, or should they be overridden.
 	ExtendPresetConditions bool `json:"extendPresetConditions,omitempty" yaml:"extendPresetConditions,omitempty"`
 }
+
+// Permissions - alias type for slice of Permissions.
+type Permissions []*Permission
+
+// PermissionPresets - alias type for map of PermissionPresets.
+type PermissionPresets map[string]*PermissionPreset
 
 // PermissionPreset - describes a preset that can be reused when defining Permissions.
 // Preset will be applied to Permission when policy is loaded.
@@ -35,9 +41,7 @@ func (p *Permission) mergePreset(preset *PermissionPreset) {
 	// If given Permission should extend preset's Conditions, we merge both
 	// Condition maps. Otherwise, we just reassign it.
 	if p.ExtendPresetConditions {
-		for _, condition := range preset.Conditions {
-			p.Conditions = append(p.Conditions, condition)
-		}
+		p.Conditions = append(p.Conditions, preset.Conditions...)
 	} else {
 		p.Conditions = preset.Conditions
 	}

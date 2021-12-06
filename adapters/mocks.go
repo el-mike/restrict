@@ -9,7 +9,6 @@ import (
 const (
 	basicRoleName        = "BasicRole"
 	basicResourceOneName = "BasicResourceOne"
-	basicResourceTwoName = "BasicResourceTwo"
 )
 
 const (
