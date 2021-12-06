@@ -50,7 +50,7 @@ func (dh *defaultJSONHandler) MarshalIndent(v interface{}, prefix, indent string
 	return json.MarshalIndent(v, prefix, indent)
 }
 
-// YAMLMarshalUnmarshaler - facade interface for yaml operations
+// YAMLMarshalUnmarshaler - facade interface for yaml operations.
 type YAMLMarshalUnmarshaler interface {
 	Unmarshal(in []byte, out interface{}) (err error)
 	Marshal(in interface{}) (out []byte, err error)

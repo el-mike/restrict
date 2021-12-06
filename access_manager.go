@@ -3,11 +3,10 @@ package restrict
 
 import "fmt"
 
-// AccessManager - manages all of the defined Permissions and Roles,
-// provides an interface to perform authorization checks and add/remove
-// Permissions and Roles.
+// AccessManager - an entity responsible for checking the authorization. It uses underlying
+// PolicyProvider to test an AccessRequest against currently used PolicyDefinition.
 type AccessManager struct {
-	// Instance of PolicyProvider, responsible for providing PolicyDefinition.
+	// PolicyProvider instance, responsible for providing PolicyDefinition.
 	policyManager PolicyProvider
 }
 
@@ -19,7 +18,7 @@ func NewAccessManager(policyManager PolicyProvider) *AccessManager {
 }
 
 // Authorize - checks if given AccessRequest can be satisfied given currently loaded policy.
-// Returns error if access is not granted or any other problem occurred, nil otherwise.
+// Returns an error if access is not granted or any other problem occurred, nil otherwise.
 func (am *AccessManager) Authorize(request *AccessRequest) error {
 	if request.Subject == nil || request.Resource == nil {
 		return newRequestMalformedError(request, fmt.Errorf("Subject or Resource not defined"))
@@ -35,8 +34,7 @@ func (am *AccessManager) Authorize(request *AccessRequest) error {
 	return am.authorize(request, roleName, resourceName, []string{})
 }
 
-// authorize - helper function for decoupling role and resource names retrieval from
-// recursive search.
+// authorize - helper function for decoupling role and resource names retrieval from recursive search.
 func (am *AccessManager) authorize(request *AccessRequest, roleName, resourceName string, checkedRoles []string) error {
 	role, err := am.policyManager.GetRole(roleName)
 	if err != nil {
@@ -89,7 +87,7 @@ func (am *AccessManager) authorize(request *AccessRequest, roleName, resourceNam
 						return err
 					}
 				} else {
-					// If .Authorize call with parent Role has returned nil,
+					// If .authorize call with parent Role has returned nil,
 					// that means the request is satisfied.
 					authorizeError = nil
 				}
@@ -120,7 +118,7 @@ func (am *AccessManager) isAccessError(err error) bool {
 	}
 }
 
-// hasAction - checks if grants list contains given action.
+// hasAction - checks if grants list contains a Permission for given action.
 func (am *AccessManager) validateAction(permissions []*Permission, action string, request *AccessRequest) error {
 	var conditionsCheckError error
 

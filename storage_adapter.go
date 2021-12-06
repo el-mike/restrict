@@ -1,7 +1,7 @@
 package restrict
 
-// StorageAdapter - allows to implement logic for persisting and loading
-// given PolicyDefinition.
+// StorageAdapter - interface for an entity that will provide persistance
+// logic for PolicyDefinition.
 type StorageAdapter interface {
 	// LoadPolicy - loads and returns PolicyDefinition from underlying
 	// storage provider.

@@ -110,13 +110,25 @@ func (s *fileAdapterSuite) TestNewFileAdapter() {
 func (s *fileAdapterSuite) TestSetJSONIndent() {
 	adapter := NewFileAdapter(s.testFileName, JSONFile)
 
-	assert.Equal(s.T(), adapter.jsonIndent, DefaultIndent)
+	assert.Equal(s.T(), adapter.jsonIndent, defaultJSONIndent)
 
 	testIndent := "  "
 
 	adapter.SetJSONIndent(testIndent)
 
 	assert.Equal(s.T(), adapter.jsonIndent, testIndent)
+}
+
+func (s *fileAdapterSuite) TestSetFilePerm() {
+	adapter := NewFileAdapter(s.testFileName, JSONFile)
+
+	assert.Equal(s.T(), adapter.filePerm, defaultFilePerm)
+
+	testPerm := FilePerm(0777)
+
+	adapter.SetFilePerm(testPerm)
+
+	assert.Equal(s.T(), adapter.filePerm, testPerm)
 }
 
 func (s *fileAdapterSuite) TestLoadPolicy_ReadFile() {
@@ -306,7 +318,7 @@ func (s *fileAdapterSuite) TestSavePolicy_WriteFile() {
 
 	assert.Nil(s.T(), err)
 	workingFileHandler.AssertNumberOfCalls(s.T(), "WriteFile", 1)
-	workingFileHandler.AssertCalled(s.T(), "WriteFile", s.testFileName, mock.Anything, DefaultFilePerm)
+	workingFileHandler.AssertCalled(s.T(), "WriteFile", s.testFileName, mock.Anything, defaultFilePerm)
 
 	// Write with failing fileHandler for JSON
 	failingFileHandler := new(fileHandlerMock)
@@ -366,10 +378,10 @@ func (s *fileAdapterSuite) TestSavePolicy_JSONFile() {
 
 	assert.Nil(s.T(), err)
 	workingJSONHandler.AssertNumberOfCalls(s.T(), "MarshalIndent", 1)
-	workingJSONHandler.AssertCalled(s.T(), "MarshalIndent", testPolicy, "", DefaultIndent)
+	workingJSONHandler.AssertCalled(s.T(), "MarshalIndent", testPolicy, "", defaultJSONIndent)
 
 	workingFileHandler.AssertNumberOfCalls(s.T(), "WriteFile", 1)
-	workingFileHandler.AssertCalled(s.T(), "WriteFile", s.testFileName, testData, DefaultFilePerm)
+	workingFileHandler.AssertCalled(s.T(), "WriteFile", s.testFileName, testData, defaultFilePerm)
 
 	// Save with failing jsonHandler
 	failingJSONHandler := new(jsonHandlerMock)
@@ -424,7 +436,7 @@ func (s *fileAdapterSuite) TestSavePolicy_YAMLFile() {
 	workingYAMLHandler.AssertCalled(s.T(), "Marshal", testPolicy)
 
 	workingFileHandler.AssertNumberOfCalls(s.T(), "WriteFile", 1)
-	workingFileHandler.AssertCalled(s.T(), "WriteFile", s.testFileName, testData, DefaultFilePerm)
+	workingFileHandler.AssertCalled(s.T(), "WriteFile", s.testFileName, testData, defaultFilePerm)
 
 	// Save with failing yamlHandler
 	failingYAMLHandler := new(yamlHandlerMock)

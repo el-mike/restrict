@@ -8,19 +8,20 @@ import (
 type AllowedFileType string
 
 const (
-	// JSONFile - JSON file type.
+	// JSONFile - JSON file type token.
 	JSONFile AllowedFileType = "JSONFile"
-	// YAMLFile - YAML file type.
+	// YAMLFile - YAML file type token.
 	YAMLFile AllowedFileType = "YAMLFile"
 )
 
-// DefaultIndent - default JSON file indentation.
-const DefaultIndent = "\t"
+// defaultJSONIndent - default JSON file indentation.
+const defaultJSONIndent = "\t"
 
-// DefaultFilePerm - default file's perm.
-const DefaultFilePerm FilePerm = 0644
+// defaultFilePerm - default file's perm.
+const defaultFilePerm FilePerm = 0644
 
-// FileAdapter - policy storage adapter, for handling file storage.
+// FileAdapter - StorageAdapter implementation, providing file-based persistance.
+// It can be configured to use JSON or YAML format.
 type FileAdapter struct {
 	fileHandler FileReadWriter
 	jsonHandler JSONMarshalUnmarshaler
@@ -28,6 +29,7 @@ type FileAdapter struct {
 
 	fileName   string
 	fileType   AllowedFileType
+	filePerm   FilePerm
 	jsonIndent string
 }
 
@@ -40,13 +42,19 @@ func NewFileAdapter(fileName string, fileType AllowedFileType) *FileAdapter {
 
 		fileName:   fileName,
 		fileType:   fileType,
-		jsonIndent: DefaultIndent,
+		filePerm:   defaultFilePerm,
+		jsonIndent: defaultJSONIndent,
 	}
 }
 
 // SetJsonIndent - allows to set indentation used when marshaling the Policy into JSON.
 func (fa *FileAdapter) SetJSONIndent(indent string) {
 	fa.jsonIndent = indent
+}
+
+// SetFilePerm - allows to set perm of the file the policy is written into.
+func (fa *FileAdapter) SetFilePerm(perm FilePerm) {
+	fa.filePerm = perm
 }
 
 // LoadPolicy - loads and returns policy from file specified when creating FileAdapter.
@@ -132,5 +140,5 @@ func (fa *FileAdapter) saveYAML(policy *restrict.PolicyDefinition) error {
 
 // saveFile - saves content to file.
 func (fa *FileAdapter) saveFile(content []byte) error {
-	return fa.fileHandler.WriteFile(fa.fileName, content, DefaultFilePerm)
+	return fa.fileHandler.WriteFile(fa.fileName, content, fa.filePerm)
 }

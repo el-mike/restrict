@@ -1,11 +1,10 @@
 package restrict
 
-// PermissionPresets - alias type for map of Permission pointers.
-type PermissionPresets map[string]*PermissionPreset
-
-// PolicyDefinition - describes a model of roles and grants that
-// are defined for the application.
+// PolicyDefinition - describes a model of Roles and Permissions that
+// are defined for the domain.
 type PolicyDefinition struct {
+	// PermissionPresets - a map of PermissionPresets.
 	PermissionPresets PermissionPresets `json:"permissionPresets" yaml:"permissionPresets"`
-	Roles             Roles             `json:"roles" yaml:"roles"`
+	// Roles - collection of Roles used in the domain.
+	Roles Roles `json:"roles" yaml:"roles"`
 }

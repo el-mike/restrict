@@ -450,6 +450,7 @@ func (s *policyManagerSuite) TestAddPermissionPreset() {
 
 	testPreset.Name = "SecondTestPreset"
 
+	//nolint
 	manager.AddPermissionPreset(testPreset)
 
 	testAdapter.AssertNumberOfCalls(s.T(), "SavePolicy", 1)
@@ -493,6 +494,7 @@ func (s *policyManagerSuite) TestUpdatePermissionPreset() {
 
 	// With auto update
 	manager.EnableAutoUpdate()
+	//nolint
 	manager.UpdatePermissionPreset(testPreset)
 
 	testAdapter.AssertNumberOfCalls(s.T(), "SavePolicy", 1)

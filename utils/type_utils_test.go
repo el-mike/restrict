@@ -10,7 +10,7 @@ import (
 type testStruct struct {
 	IntField        int
 	StringField     string
-	privateIntField int
+	privateIntField int //nolint
 }
 
 type typeUtilsSuite struct {

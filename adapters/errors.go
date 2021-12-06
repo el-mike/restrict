@@ -2,8 +2,7 @@ package adapters
 
 import "fmt"
 
-// FileTypeNotSupportedError - thrown when FileAdapter is used with inappropriate
-// file type.
+// FileTypeNotSupportedError - thrown when FileAdapter is used with inappropriate file type.
 type FileTypeNotSupportedError struct {
 	fileType string
 }

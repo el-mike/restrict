@@ -2,14 +2,14 @@ package restrict
 
 import "sync"
 
-// PolicyManager - an entity responsible for managing policy. It uses passed StorageAdapter
-// to save any changes made to policy.
+// PolicyManager - an entity responsible for managing PolicyDefinition. It uses passed StorageAdapter
+// for policy persistance.
 type PolicyManager struct {
 	// StorageAdapter used to load and save policy.
 	adapter StorageAdapter
 
 	// If set to true, PolicyManager will use it's StorageAdapter to save
-	// the policy every time any change is being made.
+	// the policy every time any change is made.
 	autoUpdate bool
 
 	// PolicyDefinition currently loaded into memory.
@@ -182,7 +182,7 @@ func (pm *PolicyManager) UpsertRole(role *Role) error {
 	return nil
 }
 
-// DeleteRole - removes a role with given ID.
+// DeleteRole - removes a Role with given ID.
 // Saves with StorageAdapter if autoUpdate is set to true.
 func (pm *PolicyManager) DeleteRole(roleID string) error {
 	pm.Lock()
@@ -206,7 +206,7 @@ func (pm *PolicyManager) DeleteRole(roleID string) error {
 	return nil
 }
 
-// AddPermission - adds a new Permission for the Role and resource with passed IDs.
+// AddPermission - adds a new Permission for the Role and Resource with passed IDs.
 // Saves with StorageAdapter if autoUpdate is set to true.
 func (pm *PolicyManager) AddPermission(roleID, resourceID string, permission *Permission) error {
 	pm.Lock()
@@ -323,7 +323,7 @@ func (pm *PolicyManager) UpdatePermissionPreset(preset *PermissionPreset) error 
 	return nil
 }
 
-// UpsertPermissionPreset - updates Permission preset if exists, add a new otherwise.
+// UpsertPermissionPreset - updates Permission preset if exists, adds a new otherwise.
 // Saves with StorageAdapter if autoUpdate is set to true.
 func (pm *PolicyManager) UpsertPermissionPreset(preset *PermissionPreset) error {
 	if err := pm.UpdatePermissionPreset(preset); err != nil {
@@ -337,7 +337,7 @@ func (pm *PolicyManager) UpsertPermissionPreset(preset *PermissionPreset) error 
 	return nil
 }
 
-// DeletePermissionPreset - removes Permission preset with given name.
+// DeletePermissionPreset - removes PermissionPreset with given name.
 // Saves with StorageAdapter if autoUpdate is set to true.
 func (pm *PolicyManager) DeletePermissionPreset(name string) error {
 	pm.Lock()
@@ -362,13 +362,13 @@ func (pm *PolicyManager) DisableAutoUpdate() {
 	pm.autoUpdate = false
 }
 
-// EnableAutoUpdate - enabled automatic update.
+// EnableAutoUpdate - enables automatic update.
 func (pm *PolicyManager) EnableAutoUpdate() {
 	pm.autoUpdate = true
 }
 
 // ensurePermissionsArray - helper function for setting GrantsMap and Permissions array
-// for given role if they don't exist (i.e. are equal to nil).
+// for given Role if they don't exist (i.e. are equal to nil).
 func (pm *PolicyManager) ensurePermissionsArray(role *Role, resourceID string) {
 	if role.Grants == nil {
 		role.Grants = GrantsMap{}

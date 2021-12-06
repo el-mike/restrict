@@ -19,7 +19,6 @@ const (
 )
 
 const basicConditionOne = "BASIC_CONDITION_ONE"
-const basicConditionTwo = "BASIC_CONDITION_TWO"
 
 type subjectMock struct {
 	mock.Mock
@@ -113,8 +112,4 @@ func getBasicPolicy() *PolicyDefinition {
 			basicRoleName: getBasicRole(),
 		},
 	}
-}
-
-func getEmptyPolicy() *PolicyDefinition {
-	return &PolicyDefinition{}
 }
