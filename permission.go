@@ -18,20 +18,8 @@ type Permission struct {
 // Permissions - alias type for slice of Permissions.
 type Permissions []*Permission
 
-// PermissionPresets - alias type for map of PermissionPresets.
-type PermissionPresets map[string]*PermissionPreset
-
-// PermissionPreset - describes a preset that can be reused when defining Permissions.
-// Preset will be applied to Permission when policy is loaded.
-type PermissionPreset struct {
-	*Permission
-
-	// Name - PermissionPreset's name, serves as preset's identifier.
-	Name string `json:"name" yaml:"name"`
-}
-
 // mergePreset - merges preset values into Permission.
-func (p *Permission) mergePreset(preset *PermissionPreset) {
+func (p *Permission) mergePreset(preset *Permission) {
 	if preset == nil {
 		return
 	}
@@ -50,3 +38,8 @@ func (p *Permission) mergePreset(preset *PermissionPreset) {
 	// policies.
 	p.Preset = ""
 }
+
+// PermissionPresets - a map of reusable Permissions. Map key serves as a preset's name,
+// that can be later referenced by Permission.
+// Presets are applied when policy is loaded.
+type PermissionPresets map[string]*Permission

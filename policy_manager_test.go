@@ -105,12 +105,12 @@ func (s *policyManagerSuite) TestLoadPolicy_ApplyPresets() {
 	manager, _ := NewPolicyManager(testAdapter, false)
 
 	testPolicy.PermissionPresets = PermissionPresets{
-		"testPreset1": &PermissionPreset{Name: "testPreset1", Permission: &Permission{
+		"testPreset1": &Permission{
 			Action: "test-action-1",
-		}},
-		"testPreset2": &PermissionPreset{Name: "testPreset2", Permission: &Permission{
+		},
+		"testPreset2": &Permission{
 			Action: "test-action-2",
-		}},
+		},
 	}
 
 	testPermissions := Permissions{
@@ -422,23 +422,23 @@ func (s *policyManagerSuite) TestAddPermissionPreset() {
 
 	testPresetName := "TestPreset"
 
-	testPreset := &PermissionPreset{Name: testPresetName, Permission: &Permission{
+	testPreset := &Permission{
 		Action: "test-action-2",
-	}}
+	}
 
 	// Preset exists
 	testPolicy.PermissionPresets = PermissionPresets{
 		testPresetName: testPreset,
 	}
 
-	err := manager.AddPermissionPreset(testPreset)
+	err := manager.AddPermissionPreset(testPresetName, testPreset)
 
 	assert.IsType(s.T(), new(PermissionPresetAlreadyExistsError), err)
 
 	// Presets set to nil, Preset does not exist, without auto update
 	testPolicy.PermissionPresets = nil
 
-	err = manager.AddPermissionPreset(testPreset)
+	err = manager.AddPermissionPreset(testPresetName, testPreset)
 
 	policy := manager.GetPolicy()
 
@@ -448,10 +448,8 @@ func (s *policyManagerSuite) TestAddPermissionPreset() {
 	// With auto update
 	manager.EnableAutoUpdate()
 
-	testPreset.Name = "SecondTestPreset"
-
 	//nolint
-	manager.AddPermissionPreset(testPreset)
+	manager.AddPermissionPreset("SecondTestPreset", testPreset)
 
 	testAdapter.AssertNumberOfCalls(s.T(), "SavePolicy", 1)
 }
@@ -466,25 +464,25 @@ func (s *policyManagerSuite) TestUpdatePermissionPreset() {
 	manager, _ := NewPolicyManager(testAdapter, false)
 
 	testPresetName := "TestPreset"
-	testPreset := &PermissionPreset{Name: testPresetName, Permission: &Permission{
+	testPreset := &Permission{
 		Action: "test-action-2",
-	}}
+	}
 
 	// Preset does not exist
 	testPolicy.PermissionPresets = PermissionPresets{
 		testPresetName: testPreset,
 	}
 
-	testIncorrectPreset := &PermissionPreset{Name: "IncorrectName", Permission: &Permission{
+	testIncorrectPreset := &Permission{
 		Action: "test-action-2",
-	}}
+	}
 
-	err := manager.UpdatePermissionPreset(testIncorrectPreset)
+	err := manager.UpdatePermissionPreset("IncorrectName", testIncorrectPreset)
 
 	assert.IsType(s.T(), new(PermissionPresetNotFoundError), err)
 
 	// Preset exists
-	err = manager.UpdatePermissionPreset(testPreset)
+	err = manager.UpdatePermissionPreset(testPresetName, testPreset)
 
 	preset := manager.getPermissionPreset(testPresetName)
 
@@ -495,7 +493,7 @@ func (s *policyManagerSuite) TestUpdatePermissionPreset() {
 	// With auto update
 	manager.EnableAutoUpdate()
 	//nolint
-	manager.UpdatePermissionPreset(testPreset)
+	manager.UpdatePermissionPreset(testPresetName, testPreset)
 
 	testAdapter.AssertNumberOfCalls(s.T(), "SavePolicy", 1)
 }
@@ -509,18 +507,18 @@ func (s *policyManagerSuite) TestUpsertPermissionPreset() {
 	manager, _ := NewPolicyManager(testAdapter, false)
 
 	testPresetName := "TestPreset"
-	testPreset := &PermissionPreset{Name: testPresetName, Permission: &Permission{
+	testPreset := &Permission{
 		Action: "test-action-2",
-	}}
+	}
 
 	// Preset does not exist
-	err := manager.UpsertPermissionPreset(testPreset)
+	err := manager.UpsertPermissionPreset(testPresetName, testPreset)
 	preset := manager.getPermissionPreset(testPresetName)
 
 	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), testPreset, preset)
 
-	err = manager.UpsertPermissionPreset(testPreset)
+	err = manager.UpsertPermissionPreset(testPresetName, testPreset)
 	preset = manager.getPermissionPreset(testPresetName)
 
 	assert.Nil(s.T(), err)
@@ -535,18 +533,18 @@ func (s *policyManagerSuite) TestDeletePermissionPreset() {
 	testAdapter.On("SavePolicy", mock.Anything).Return(nil)
 
 	testPresetName := "TestPreset"
-	testPreset := &PermissionPreset{Name: testPresetName, Permission: &Permission{
+	testPreset := &Permission{
 		Action: "test-action-2",
-	}}
+	}
 
 	testPolicy.PermissionPresets = PermissionPresets{
 		testPresetName: testPreset,
-		"TestPreset2": &PermissionPreset{Name: testPresetName, Permission: &Permission{
+		"TestPreset2": &Permission{
 			Action: "test-action-2",
-		}},
-		"TestPreset3": &PermissionPreset{Name: testPresetName, Permission: &Permission{
+		},
+		"TestPreset3": &Permission{
 			Action: "test-action-2",
-		}},
+		},
 	}
 
 	manager, _ := NewPolicyManager(testAdapter, false)
@@ -554,7 +552,7 @@ func (s *policyManagerSuite) TestDeletePermissionPreset() {
 	assert.Equal(s.T(), len(testPolicy.PermissionPresets), 3)
 
 	// Incorrect preset, without auto update
-	err := manager.DeletePermissionPreset("INCORRECT_ROLE")
+	err := manager.DeletePermissionPreset("INCORRECT_PRESET")
 
 	assert.IsType(s.T(), new(PermissionPresetNotFoundError), err)
 	testAdapter.AssertNumberOfCalls(s.T(), "SavePolicy", 0)
