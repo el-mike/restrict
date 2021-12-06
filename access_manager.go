@@ -22,14 +22,14 @@ func NewAccessManager(policyManager PolicyProvider) *AccessManager {
 // Returns error if access is not granted or any other problem occurred, nil otherwise.
 func (am *AccessManager) Authorize(request *AccessRequest) error {
 	if request.Subject == nil || request.Resource == nil {
-		return NewRequestMalformedError(request, fmt.Errorf("Subject or Resource not defined"))
+		return newRequestMalformedError(request, fmt.Errorf("Subject or Resource not defined"))
 	}
 
 	roleName := request.Subject.GetRole()
 	resourceName := request.Resource.GetResourceName()
 
 	if roleName == "" || resourceName == "" {
-		return NewRequestMalformedError(request, fmt.Errorf("Missing roleName or resourceName"))
+		return newRequestMalformedError(request, fmt.Errorf("Missing roleName or resourceName"))
 	}
 
 	return am.authorize(request, roleName, resourceName, []string{})
@@ -44,7 +44,7 @@ func (am *AccessManager) authorize(request *AccessRequest, roleName, resourceNam
 	}
 
 	if role.Grants == nil {
-		return NewNoAvailablePermissionsError(role.ID)
+		return newNoAvailablePermissionsError(role.ID)
 	}
 
 	grants := role.Grants[resourceName]
@@ -53,12 +53,12 @@ func (am *AccessManager) authorize(request *AccessRequest, roleName, resourceNam
 	// If given role has no permissions granted, and no parents to
 	// fall back on, return an error.
 	if len(grants) == 0 && len(parents) == 0 {
-		return NewNoAvailablePermissionsError(role.ID)
+		return newNoAvailablePermissionsError(role.ID)
 	}
 
 	for _, action := range request.Actions {
 		if action == "" {
-			return NewRequestMalformedError(request, fmt.Errorf("Action cannot be empty"))
+			return newRequestMalformedError(request, fmt.Errorf("Action cannot be empty"))
 		}
 
 		authorizeError := am.validateAction(grants, action, request)
@@ -78,7 +78,7 @@ func (am *AccessManager) authorize(request *AccessRequest, roleName, resourceNam
 				// If parent has already been checked, we want to return an error - otherwise
 				// this function will fall into infinite loop.
 				if am.isRoleChecked(parent, checkedRoles) {
-					return NewRoleInheritanceCycleError(checkedRoles)
+					return newRoleInheritanceCycleError(checkedRoles)
 				}
 
 				if err := am.authorize(parentRequest, parent, resourceName, checkedRoles); err != nil {
@@ -98,7 +98,7 @@ func (am *AccessManager) authorize(request *AccessRequest, roleName, resourceNam
 
 		// If request has not been granted, abort the loop and return an error.
 		if authorizeError != nil {
-			return NewAccessDeniedError(request, action, authorizeError)
+			return newAccessDeniedError(request, action, authorizeError)
 		}
 	}
 
@@ -144,7 +144,7 @@ func (am *AccessManager) validateAction(permissions []*Permission, action string
 		return conditionsCheckError
 	}
 
-	return NewPermissionNotGrantedError(action, request.Resource.GetResourceName())
+	return newPermissionNotGrantedError(action, request.Resource.GetResourceName())
 }
 
 // checkConditions - returns nil if all conditions specified for given actions

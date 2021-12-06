@@ -95,7 +95,7 @@ func (pm *PolicyManager) applyPreset(permission *Permission) error {
 
 	// If given preset does not exist, return an error.
 	if permissionPreset == nil {
-		return NewPermissionPresetNotFoundError(permission.Preset)
+		return newPermissionPresetNotFoundError(permission.Preset)
 	}
 
 	// Otherwise, merge found preset into Permission.
@@ -112,7 +112,7 @@ func (pm *PolicyManager) GetRole(roleID string) (*Role, error) {
 	role := pm.getRole(roleID)
 	// If given Role does not exists, return an error.
 	if role == nil {
-		return nil, NewRoleNotFoundError(roleID)
+		return nil, newRoleNotFoundError(roleID)
 	}
 
 	return role, nil
@@ -126,7 +126,7 @@ func (pm *PolicyManager) AddRole(role *Role) error {
 
 	// Check if role already exists - if yes, return an error.
 	if r := pm.getRole(role.ID); r != nil {
-		return NewRoleAlreadyExistsError(role.ID)
+		return newRoleAlreadyExistsError(role.ID)
 	}
 
 	pm.policy.Roles[role.ID] = role
@@ -151,7 +151,7 @@ func (pm *PolicyManager) UpdateRole(role *Role) error {
 
 	// If given Role does not exists, return an error.
 	if r := pm.getRole(role.ID); r == nil {
-		return NewRoleNotFoundError(role.ID)
+		return newRoleNotFoundError(role.ID)
 	}
 
 	pm.policy.Roles[role.ID] = role
@@ -194,7 +194,7 @@ func (pm *PolicyManager) DeleteRole(roleID string) error {
 
 	// If Role with given ID does not exist, return an error.
 	if r := pm.getRole(roleID); r == nil {
-		return NewRoleNotFoundError(roleID)
+		return newRoleNotFoundError(roleID)
 	}
 
 	delete(pm.policy.Roles, roleID)
@@ -215,7 +215,7 @@ func (pm *PolicyManager) AddPermission(roleID, resourceID string, permission *Pe
 	role := pm.getRole(roleID)
 	// If role does not exist, return an error.
 	if role == nil {
-		return NewRoleNotFoundError(roleID)
+		return newRoleNotFoundError(roleID)
 	}
 
 	pm.ensurePermissionsArray(role, resourceID)
@@ -247,7 +247,7 @@ func (pm *PolicyManager) DeletePermission(roleID, resourceID, action string) err
 
 	// If role does not exist, return an error.
 	if role == nil {
-		return NewRoleNotFoundError(roleID)
+		return newRoleNotFoundError(roleID)
 	}
 
 	pm.ensurePermissionsArray(role, resourceID)
@@ -287,7 +287,7 @@ func (pm *PolicyManager) AddPermissionPreset(preset *PermissionPreset) error {
 
 	// If there is already a preset with given name, return an error.
 	if p := pm.getPermissionPreset(preset.Name); p != nil {
-		return NewPermissionPresetAlreadyExistsError(preset.Name)
+		return newPermissionPresetAlreadyExistsError(preset.Name)
 	}
 
 	if pm.policy.PermissionPresets == nil {
@@ -311,7 +311,7 @@ func (pm *PolicyManager) UpdatePermissionPreset(preset *PermissionPreset) error 
 
 	// If there is no preset with given name, return an error.
 	if p := pm.getPermissionPreset(preset.Name); p == nil {
-		return NewPermissionPresetNotFoundError(preset.Name)
+		return newPermissionPresetNotFoundError(preset.Name)
 	}
 
 	pm.policy.PermissionPresets[preset.Name] = preset
@@ -345,7 +345,7 @@ func (pm *PolicyManager) DeletePermissionPreset(name string) error {
 
 	// If there is no preset with given name, return an error.
 	if p := pm.getPermissionPreset(name); p == nil {
-		return NewPermissionPresetNotFoundError(name)
+		return newPermissionPresetNotFoundError(name)
 	}
 
 	delete(pm.policy.PermissionPresets, name)

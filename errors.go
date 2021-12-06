@@ -8,8 +8,8 @@ type RoleNotFoundError struct {
 	roleID string
 }
 
-// NewRoleNotFoundError - returns new RoleNotFoundError instance.
-func NewRoleNotFoundError(roleID string) *RoleNotFoundError {
+// newRoleNotFoundError - returns new RoleNotFoundError instance.
+func newRoleNotFoundError(roleID string) *RoleNotFoundError {
 	return &RoleNotFoundError{
 		roleID: roleID,
 	}
@@ -26,8 +26,8 @@ type RoleAlreadyExistsError struct {
 	roleID string
 }
 
-// NewRoleAlreadyExistsError - returns new RoleAlreadyExistsError instance.
-func NewRoleAlreadyExistsError(roleID string) *RoleAlreadyExistsError {
+// newRoleAlreadyExistsError - returns new RoleAlreadyExistsError instance.
+func newRoleAlreadyExistsError(roleID string) *RoleAlreadyExistsError {
 	return &RoleAlreadyExistsError{
 		roleID: roleID,
 	}
@@ -43,8 +43,8 @@ type NoAvailablePermissionsError struct {
 	roleID string
 }
 
-// NewNoAvailablePermissionsError - returns new NoAvailablePermissionsError instance.
-func NewNoAvailablePermissionsError(roleID string) *NoAvailablePermissionsError {
+// newNoAvailablePermissionsError - returns new NoAvailablePermissionsError instance.
+func newNoAvailablePermissionsError(roleID string) *NoAvailablePermissionsError {
 	return &NoAvailablePermissionsError{
 		roleID: roleID,
 	}
@@ -61,8 +61,8 @@ type PermissionPresetNotFoundError struct {
 	name string
 }
 
-// NewPermissionPresetNotFoundError - returns new PermissionPresetNotFoundError instance.
-func NewPermissionPresetNotFoundError(name string) *PermissionPresetNotFoundError {
+// newPermissionPresetNotFoundError - returns new PermissionPresetNotFoundError instance.
+func newPermissionPresetNotFoundError(name string) *PermissionPresetNotFoundError {
 	return &PermissionPresetNotFoundError{
 		name: name,
 	}
@@ -79,8 +79,8 @@ type PermissionPresetAlreadyExistsError struct {
 	name string
 }
 
-// NewPermissionPresetAlreadyExistsError - returns new PermissionPresetAlreadyExistsError instance.
-func NewPermissionPresetAlreadyExistsError(name string) *PermissionPresetAlreadyExistsError {
+// newPermissionPresetAlreadyExistsError - returns new PermissionPresetAlreadyExistsError instance.
+func newPermissionPresetAlreadyExistsError(name string) *PermissionPresetAlreadyExistsError {
 	return &PermissionPresetAlreadyExistsError{
 		name: name,
 	}
@@ -98,8 +98,8 @@ type AccessDeniedError struct {
 	reason  error
 }
 
-// NewAccessDeniedError - returns new AccessDeniedError instance.
-func NewAccessDeniedError(request *AccessRequest, action string, reason error) *AccessDeniedError {
+// newAccessDeniedError - returns new AccessDeniedError instance.
+func newAccessDeniedError(request *AccessRequest, action string, reason error) *AccessDeniedError {
 	return &AccessDeniedError{
 		request: request,
 		action:  action,
@@ -140,8 +140,8 @@ type RequestMalformedError struct {
 	reason  error
 }
 
-// NewRequestMalformedError - returns new SubjectNotDefinedError instance.
-func NewRequestMalformedError(request *AccessRequest, reason error) *RequestMalformedError {
+// newRequestMalformedError - returns new SubjectNotDefinedError instance.
+func newRequestMalformedError(request *AccessRequest, reason error) *RequestMalformedError {
 	return &RequestMalformedError{
 		request: request,
 		reason:  reason,
@@ -169,8 +169,8 @@ type ConditionFactoryAlreadyExistsError struct {
 	conditionName string
 }
 
-// NewConditionFactoryAlreadyExistsError - returns new ConditionFactoryAlreadyExistsError instance.
-func NewConditionFactoryAlreadyExistsError(conditionName string) *ConditionFactoryAlreadyExistsError {
+// newConditionFactoryAlreadyExistsError - returns new ConditionFactoryAlreadyExistsError instance.
+func newConditionFactoryAlreadyExistsError(conditionName string) *ConditionFactoryAlreadyExistsError {
 	return &ConditionFactoryAlreadyExistsError{
 		conditionName: conditionName,
 	}
@@ -187,8 +187,8 @@ type ConditionFactoryNotFoundError struct {
 	conditionName string
 }
 
-// NewConditionFactoryNotFoundError - returns new ConditionFactoryNotFoundError instance.
-func NewConditionFactoryNotFoundError(conditionName string) *ConditionFactoryNotFoundError {
+// newConditionFactoryNotFoundError - returns new ConditionFactoryNotFoundError instance.
+func newConditionFactoryNotFoundError(conditionName string) *ConditionFactoryNotFoundError {
 	return &ConditionFactoryNotFoundError{
 		conditionName: conditionName,
 	}
@@ -205,8 +205,8 @@ type ValueDescriptorMalformedError struct {
 	reason     error
 }
 
-// NewValueDescriptorMalformedError - returns new ValueDescriptorMalformedError instance.
-func NewValueDescriptorMalformedError(descriptor *ValueDescriptor, reason error) *ValueDescriptorMalformedError {
+// newValueDescriptorMalformedError - returns new ValueDescriptorMalformedError instance.
+func newValueDescriptorMalformedError(descriptor *ValueDescriptor, reason error) *ValueDescriptorMalformedError {
 	return &ValueDescriptorMalformedError{
 		descriptor: *descriptor,
 		reason:     reason,
@@ -236,8 +236,8 @@ type ConditionNotSatisfiedError struct {
 	reason    error
 }
 
-// NewConditionNotSatisfiedError - returns new ConditionNotSatisfiedError instance.
-func NewConditionNotSatisfiedError(condition Condition, request *AccessRequest, reason error) *ConditionNotSatisfiedError {
+// newConditionNotSatisfiedError - returns new ConditionNotSatisfiedError instance.
+func newConditionNotSatisfiedError(condition Condition, request *AccessRequest, reason error) *ConditionNotSatisfiedError {
 	return &ConditionNotSatisfiedError{
 		condition: condition,
 		request:   request,
@@ -272,8 +272,8 @@ type PermissionNotGrantedError struct {
 	resourceName string
 }
 
-// NewPermissionNotGrantedError - returns new ActionNotFoundError instance.
-func NewPermissionNotGrantedError(action string, resourceName string) *PermissionNotGrantedError {
+// newPermissionNotGrantedError - returns new ActionNotFoundError instance.
+func newPermissionNotGrantedError(action string, resourceName string) *PermissionNotGrantedError {
 	return &PermissionNotGrantedError{
 		action:       action,
 		resourceName: resourceName,
@@ -290,8 +290,8 @@ type RoleInheritanceCycleError struct {
 	roles []string
 }
 
-// NewRoleInheritanceCycleError - returns new RoleInheritanceCycleError instance.
-func NewRoleInheritanceCycleError(roles []string) *RoleInheritanceCycleError {
+// newRoleInheritanceCycleError - returns new RoleInheritanceCycleError instance.
+func newRoleInheritanceCycleError(roles []string) *RoleInheritanceCycleError {
 	return &RoleInheritanceCycleError{
 		roles: roles,
 	}
