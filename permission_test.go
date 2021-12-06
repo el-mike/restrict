@@ -25,7 +25,7 @@ func (s *permissionSuite) SetupSuite() {
 
 func (s *permissionSuite) TestMergePreset() {
 	// Do not extend conditions
-	testCondition := new(ConditionMock)
+	testCondition := new(conditionMock)
 
 	testPreset := &PermissionPreset{
 		Name: s.testPresetName,

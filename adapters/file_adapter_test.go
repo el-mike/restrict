@@ -164,7 +164,7 @@ func (s *fileAdapterSuite) TestLoadPolicy_ReadFile() {
 
 func (s *fileAdapterSuite) TestLoadPolicy_JSONFile() {
 	// Load with working jsonHandler
-	testData := []byte(restrict.GetBasicPolicyJSONString())
+	testData := []byte(getBasicPolicyJSONString())
 
 	testFileHandler := new(fileHandlerMock)
 	testFileHandler.On(
@@ -215,7 +215,7 @@ func (s *fileAdapterSuite) TestLoadPolicy_JSONFile() {
 
 func (s *fileAdapterSuite) TestLoadPolicy_YAMLFile() {
 	// Load with working yamlHandler
-	testData := []byte(restrict.GetBasicPolicyYAMLString())
+	testData := []byte(getBasicPolicyYAMLString())
 
 	testFileHandler := new(fileHandlerMock)
 	testFileHandler.On(
@@ -259,7 +259,7 @@ func (s *fileAdapterSuite) TestLoadPolicy_YAMLFile() {
 }
 
 func (s *fileAdapterSuite) TestSavePolicy() {
-	testPolicy := restrict.GetBasicPolicy()
+	testPolicy := getBasicPolicy()
 
 	adapter := NewFileAdapter(s.testFileName, "incorrectFileType")
 
@@ -271,9 +271,9 @@ func (s *fileAdapterSuite) TestSavePolicy() {
 
 func (s *fileAdapterSuite) TestSavePolicy_WriteFile() {
 	// Write with working fileHandler
-	testJSONData := []byte(restrict.GetBasicPolicyJSONString())
-	testYAMLData := []byte(restrict.GetBasicPolicyYAMLString())
-	testPolicy := restrict.GetBasicPolicy()
+	testJSONData := []byte(getBasicPolicyJSONString())
+	testYAMLData := []byte(getBasicPolicyYAMLString())
+	testPolicy := getBasicPolicy()
 
 	workingFileHandler := new(fileHandlerMock)
 	workingFileHandler.On(
@@ -338,8 +338,8 @@ func (s *fileAdapterSuite) TestSavePolicy_WriteFile() {
 
 func (s *fileAdapterSuite) TestSavePolicy_JSONFile() {
 	// Save with working jsonHandler
-	testData := []byte(restrict.GetBasicPolicyJSONString())
-	testPolicy := restrict.GetBasicPolicy()
+	testData := []byte(getBasicPolicyJSONString())
+	testPolicy := getBasicPolicy()
 
 	workingFileHandler := new(fileHandlerMock)
 	workingFileHandler.On(
@@ -395,8 +395,8 @@ func (s *fileAdapterSuite) TestSavePolicy_JSONFile() {
 
 func (s *fileAdapterSuite) TestSavePolicy_YAMLFile() {
 	// Save with working yamlHandler
-	testData := []byte(restrict.GetBasicPolicyYAMLString())
-	testPolicy := restrict.GetBasicPolicy()
+	testData := []byte(getBasicPolicyYAMLString())
+	testPolicy := getBasicPolicy()
 
 	workingFileHandler := new(fileHandlerMock)
 	workingFileHandler.On(

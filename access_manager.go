@@ -77,7 +77,7 @@ func (am *AccessManager) authorize(request *AccessRequest, roleName, resourceNam
 
 				// If parent has already been checked, we want to return an error - otherwise
 				// this function will fall into infinite loop.
-				if am.isChecked(parent, checkedRoles) {
+				if am.isRoleChecked(parent, checkedRoles) {
 					return NewRoleInheritanceCycleError(checkedRoles)
 				}
 
@@ -163,8 +163,8 @@ func (am *AccessManager) checkConditions(permission *Permission, request *Access
 	return nil
 }
 
-// isChecked - returns true if role is in parents slice, false otherwise.
-func (am *AccessManager) isChecked(role string, parents []string) bool {
+// isRoleChecked - returns true if role is in parents slice, false otherwise.
+func (am *AccessManager) isRoleChecked(role string, parents []string) bool {
 	for _, parent := range parents {
 		if role == parent {
 			return true

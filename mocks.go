@@ -1,47 +1,45 @@
 package restrict
 
 import (
-	"fmt"
-
 	"github.com/stretchr/testify/mock"
 )
 
 const (
-	BasicRoleName        = "BasicRole"
-	BasicParentRoleName  = "BasicParentRole"
-	BasicResourceOneName = "BasicResourceOne"
-	BasicResourceTwoName = "BasicResourceTwo"
+	basicRoleName        = "BasicRole"
+	basicParentRoleName  = "BasicParentRole"
+	basicResourceOneName = "BasicResourceOne"
+	basicResourceTwoName = "BasicResourceTwo"
 )
 
 const (
-	CreateAction = "create"
-	ReadAction   = "read"
-	UpdateAction = "update"
-	DeleteAction = "delete"
+	createAction = "create"
+	readAction   = "read"
+	updateAction = "update"
+	deleteAction = "delete"
 )
 
-const BasicConditionOne = "BASIC_CONDITION_ONE"
-const BasicConditionTwo = "BASIC_CONDITION_TWO"
+const basicConditionOne = "BASIC_CONDITION_ONE"
+const basicConditionTwo = "BASIC_CONDITION_TWO"
 
-type SubjectMock struct {
+type subjectMock struct {
 	mock.Mock
 
 	ID string
 }
 
-func (m *SubjectMock) GetRole() string {
+func (m *subjectMock) GetRole() string {
 	args := m.Called()
 
 	// Note that this is not checking if first argument is string, so "" (empty string)
 	// can be used when we want to test failing GetRole.
 	if args.Get(0) == nil {
-		return BasicRoleName
+		return basicRoleName
 	}
 
 	return args.String(0)
 }
 
-type ResourceMock struct {
+type resourceMock struct {
 	mock.Mock
 
 	ID        string
@@ -49,7 +47,7 @@ type ResourceMock struct {
 	Type      string
 }
 
-func (m *ResourceMock) GetResourceName() string {
+func (m *resourceMock) GetResourceName() string {
 	args := m.Called()
 
 	// Note that this is not checking if first argument is string, so "" (empty string)
@@ -61,96 +59,56 @@ func (m *ResourceMock) GetResourceName() string {
 	return args.String(0)
 }
 
-type ConditionMock struct {
+type conditionMock struct {
 	mock.Mock
 }
 
-func (m *ConditionMock) Type() string {
+func (m *conditionMock) Type() string {
 	args := m.Called()
 
 	if args.Get(0) == nil {
-		return BasicConditionOne
+		return basicConditionOne
 	}
 	return args.String(0)
 }
 
-func (m *ConditionMock) Check(request *AccessRequest) error {
+func (m *conditionMock) Check(request *AccessRequest) error {
 	args := m.Called()
 
 	return args.Error(0)
 }
 
-func GetBasicRole() *Role {
+func getBasicRole() *Role {
 	return &Role{
-		ID:          BasicRoleName,
+		ID:          basicRoleName,
 		Description: "Basic Role",
 		Grants: GrantsMap{
-			BasicResourceOneName: {
-				&Permission{Action: CreateAction},
-				&Permission{Action: ReadAction},
+			basicResourceOneName: {
+				&Permission{Action: createAction},
+				&Permission{Action: readAction},
 			},
 		},
 	}
 }
 
-func GetBasicParentRole() *Role {
-	role := GetBasicRole()
+func getBasicParentRole() *Role {
+	role := getBasicRole()
 
-	role.ID = BasicParentRoleName
+	role.ID = basicParentRoleName
 	role.Description = "Basic Parent Role"
-	role.Grants[BasicResourceOneName] = append(role.Grants[BasicResourceOneName], &Permission{Action: UpdateAction})
+	role.Grants[basicResourceOneName] = append(role.Grants[basicResourceOneName], &Permission{Action: updateAction})
 
 	return role
 }
 
-func GetBasicPolicy() *PolicyDefinition {
+func getBasicPolicy() *PolicyDefinition {
 	return &PolicyDefinition{
 		Roles: Roles{
-			BasicRoleName: GetBasicRole(),
+			basicRoleName: getBasicRole(),
 		},
 	}
 }
 
-func GetEmptyPolicy() *PolicyDefinition {
+func getEmptyPolicy() *PolicyDefinition {
 	return &PolicyDefinition{}
-}
-
-func GetBasicPolicyJSONString() string {
-	return fmt.Sprintf(`{
-		"roles": {
-			"%s": {
-				"id": "%s",
-				"description": "Basic role",
-				"grants": {
-					"%s": [
-						{ "action": "%s" },
-						{ "action: "%s" }
-					]
-				}
-			}
-		}
-	}`, BasicRoleName,
-		BasicRoleName,
-		BasicResourceOneName,
-		CreateAction,
-		ReadAction,
-	)
-}
-
-func GetBasicPolicyYAMLString() string {
-	return fmt.Sprintf(`
-		roles:
-			%s:
-				id: %s,
-				description: "Basic role",
-				grants:
-					%s:
-						- action: %s
-						- action: %s
-	`, BasicRoleName,
-		BasicRoleName,
-		BasicResourceOneName,
-		CreateAction,
-		ReadAction,
-	)
 }
