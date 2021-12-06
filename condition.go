@@ -100,7 +100,7 @@ func (cs *Conditions) UnmarshalJSON(jsonData []byte) error {
 		factory := ConditionFactories[jsonCondition.Type]
 
 		if factory == nil {
-			return NewConditionFactoryNotFoundError(jsonCondition.Type)
+			return newConditionFactoryNotFoundError(jsonCondition.Type)
 		}
 
 		condition := factory()
@@ -135,7 +135,7 @@ func (cs *Conditions) UnmarshalYAML(value *yaml.Node) error {
 		factory := ConditionFactories[yamlCondition.Type]
 
 		if factory == nil {
-			return NewConditionFactoryNotFoundError(yamlCondition.Type)
+			return newConditionFactoryNotFoundError(yamlCondition.Type)
 		}
 
 		condition := factory()
@@ -170,7 +170,7 @@ var ConditionFactories = ConditionFatoriesMap{
 // is already taken, an error is returned.
 func RegisterConditionFactory(name string, factory ConditionFactory) error {
 	if ConditionFactories[name] != nil {
-		return NewConditionFactoryAlreadyExistsError(name)
+		return newConditionFactoryAlreadyExistsError(name)
 	}
 
 	ConditionFactories[name] = factory
