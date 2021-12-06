@@ -49,7 +49,7 @@ func (pm *PolicyManager) LoadPolicy() error {
 
 	pm.policy = policy
 
-	if err := pm.ApplyPresets(); err != nil {
+	if err := pm.applyPresets(); err != nil {
 		return err
 	}
 
@@ -70,15 +70,17 @@ func (pm *PolicyManager) GetPolicy() *PolicyDefinition {
 	return pm.policy
 }
 
-// ApplyPresets - applies defined presets to Permissions that are not yet merged.
-func (pm *PolicyManager) ApplyPresets() error {
+// applyPresets - applies defined presets to Permissions that are not yet merged.
+func (pm *PolicyManager) applyPresets() error {
 	// For every Role, iterate over all Permissions for given Resource and
 	// merge Permission with it's preset if defined.
 	for _, role := range pm.policy.Roles {
 		for _, grants := range role.Grants {
 			for _, permission := range grants {
 				if permission.Preset != "" {
-					return pm.ApplyPreset(permission)
+					if err := pm.applyPreset(permission); err != nil {
+						return err
+					}
 				}
 			}
 		}
@@ -87,8 +89,8 @@ func (pm *PolicyManager) ApplyPresets() error {
 	return nil
 }
 
-// ApplyPreset - applies defined preset to Permission.
-func (pm *PolicyManager) ApplyPreset(permission *Permission) error {
+// applyPreset - applies defined preset to Permission.
+func (pm *PolicyManager) applyPreset(permission *Permission) error {
 	permissionPreset := pm.policy.PermissionPresets[permission.Preset]
 
 	// If given preset does not exist, return an error.
@@ -100,14 +102,6 @@ func (pm *PolicyManager) ApplyPreset(permission *Permission) error {
 	permission.mergePreset(permissionPreset)
 
 	return nil
-}
-
-// GetPermissionPresets - returns a map of Permission presets defined in PolicyDefinition.
-func (pm *PolicyManager) GetPermissionPresets() *PermissionPresets {
-	pm.RLock()
-	defer pm.RUnlock()
-
-	return &pm.policy.PermissionPresets
 }
 
 // GetRole - returns a Role with given ID from currently loaded PolicyDefiniton.
@@ -138,7 +132,7 @@ func (pm *PolicyManager) AddRole(role *Role) error {
 	pm.policy.Roles[role.ID] = role
 
 	// Since new Permissions with presets could be added, run ApplyPresets.
-	if err := pm.ApplyPresets(); err != nil {
+	if err := pm.applyPresets(); err != nil {
 		return err
 	}
 
@@ -163,7 +157,7 @@ func (pm *PolicyManager) UpdateRole(role *Role) error {
 	pm.policy.Roles[role.ID] = role
 
 	// Since new Permissions with presets could be added, run ApplyPresets.
-	if err := pm.ApplyPresets(); err != nil {
+	if err := pm.applyPresets(); err != nil {
 		return err
 	}
 
@@ -221,7 +215,7 @@ func (pm *PolicyManager) AddPermission(roleID, resourceID string, permission *Pe
 	role := pm.getRole(roleID)
 	// If role does not exist, return an error.
 	if role == nil {
-		return NewRoleNotFoundError(role.ID)
+		return NewRoleNotFoundError(roleID)
 	}
 
 	pm.ensurePermissionsArray(role, resourceID)
@@ -230,7 +224,7 @@ func (pm *PolicyManager) AddPermission(roleID, resourceID string, permission *Pe
 
 	// If added Permission has preset defined, apply it immediately.
 	if permission.Preset != "" {
-		if err := pm.ApplyPreset(permission); err != nil {
+		if err := pm.applyPreset(permission); err != nil {
 			return err
 		}
 	}
@@ -253,7 +247,7 @@ func (pm *PolicyManager) DeletePermission(roleID, resourceID, action string) err
 
 	// If role does not exist, return an error.
 	if role == nil {
-		return NewRoleNotFoundError(role.ID)
+		return NewRoleNotFoundError(roleID)
 	}
 
 	pm.ensurePermissionsArray(role, resourceID)
@@ -272,7 +266,7 @@ func (pm *PolicyManager) DeletePermission(roleID, resourceID, action string) err
 }
 
 // deletePermissionFromSlice - helper function for removing Permission under given index
-// from Permissions array.
+// from Permissions slice.
 func (pm *PolicyManager) deletePermissionFromSlice(grants []*Permission, index int) []*Permission {
 	if index >= 0 {
 		newGrants := make([]*Permission, 0)
@@ -294,6 +288,10 @@ func (pm *PolicyManager) AddPermissionPreset(preset *PermissionPreset) error {
 	// If there is already a preset with given name, return an error.
 	if p := pm.getPermissionPreset(preset.Name); p != nil {
 		return NewPermissionPresetAlreadyExistsError(preset.Name)
+	}
+
+	if pm.policy.PermissionPresets == nil {
+		pm.policy.PermissionPresets = PermissionPresets{}
 	}
 
 	pm.policy.PermissionPresets[preset.Name] = preset
