@@ -8,8 +8,8 @@ type FileTypeNotSupportedError struct {
 	fileType string
 }
 
-// NewFileTypeNotSupportedError - returns new FileTypeNotSupportedError instance.
-func NewFileTypeNotSupportedError(fileType string) *FileTypeNotSupportedError {
+// newFileTypeNotSupportedError - returns new FileTypeNotSupportedError instance.
+func newFileTypeNotSupportedError(fileType string) *FileTypeNotSupportedError {
 	return &FileTypeNotSupportedError{
 		fileType: fileType,
 	}
