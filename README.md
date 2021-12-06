@@ -58,8 +58,8 @@ var policy = &restrict.PolicyDefinition{
 
 func main() {
 	adapter := adapters.NewInMemoryAdapter(policy)
-	policyMananger, err := restrict.NewPolicyManager(adapter, true)
 
+	policyMananger, err := restrict.NewPolicyManager(adapter, true)
 	if err != nil {
 		log.Fatal(err)
 	}
