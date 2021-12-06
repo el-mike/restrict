@@ -91,15 +91,15 @@ func (pm *PolicyManager) applyPresets() error {
 
 // applyPreset - applies defined preset to Permission.
 func (pm *PolicyManager) applyPreset(permission *Permission) error {
-	permissionPreset := pm.policy.PermissionPresets[permission.Preset]
+	preset := pm.policy.PermissionPresets[permission.Preset]
 
 	// If given preset does not exist, return an error.
-	if permissionPreset == nil {
+	if preset == nil {
 		return newPermissionPresetNotFoundError(permission.Preset)
 	}
 
 	// Otherwise, merge found preset into Permission.
-	permission.mergePreset(permissionPreset)
+	permission.mergePreset(preset)
 
 	return nil
 }
@@ -279,22 +279,22 @@ func (pm *PolicyManager) deletePermissionFromSlice(grants []*Permission, index i
 	return grants
 }
 
-// AddPermissionPreset - adds new PermissionPreset to PolicyDefinition.
+// AddPermissionPreset - adds new Permission preset to PolicyDefinition.
 // Saves with StorageAdapter if autoUpdate is set to true.
-func (pm *PolicyManager) AddPermissionPreset(preset *PermissionPreset) error {
+func (pm *PolicyManager) AddPermissionPreset(name string, preset *Permission) error {
 	pm.Lock()
 	defer pm.Unlock()
 
 	// If there is already a preset with given name, return an error.
-	if p := pm.getPermissionPreset(preset.Name); p != nil {
-		return newPermissionPresetAlreadyExistsError(preset.Name)
+	if p := pm.getPermissionPreset(name); p != nil {
+		return newPermissionPresetAlreadyExistsError(name)
 	}
 
 	if pm.policy.PermissionPresets == nil {
 		pm.policy.PermissionPresets = PermissionPresets{}
 	}
 
-	pm.policy.PermissionPresets[preset.Name] = preset
+	pm.policy.PermissionPresets[name] = preset
 
 	if pm.autoUpdate {
 		return pm.adapter.SavePolicy(pm.policy)
@@ -303,18 +303,18 @@ func (pm *PolicyManager) AddPermissionPreset(preset *PermissionPreset) error {
 	return nil
 }
 
-// UpdatePermissionPreset - updates a PermissionPreset in PolicyDefinition.
+// UpdatePermissionPreset - updates a Permission preset in PolicyDefinition.
 // Saves with StorageAdapter if autoUpdate is set to true.
-func (pm *PolicyManager) UpdatePermissionPreset(preset *PermissionPreset) error {
+func (pm *PolicyManager) UpdatePermissionPreset(name string, preset *Permission) error {
 	pm.Lock()
 	defer pm.Unlock()
 
 	// If there is no preset with given name, return an error.
-	if p := pm.getPermissionPreset(preset.Name); p == nil {
-		return newPermissionPresetNotFoundError(preset.Name)
+	if p := pm.getPermissionPreset(name); p == nil {
+		return newPermissionPresetNotFoundError(name)
 	}
 
-	pm.policy.PermissionPresets[preset.Name] = preset
+	pm.policy.PermissionPresets[name] = preset
 
 	if pm.autoUpdate {
 		return pm.adapter.SavePolicy(pm.policy)
@@ -325,10 +325,10 @@ func (pm *PolicyManager) UpdatePermissionPreset(preset *PermissionPreset) error 
 
 // UpsertPermissionPreset - updates Permission preset if exists, adds a new otherwise.
 // Saves with StorageAdapter if autoUpdate is set to true.
-func (pm *PolicyManager) UpsertPermissionPreset(preset *PermissionPreset) error {
-	if err := pm.UpdatePermissionPreset(preset); err != nil {
+func (pm *PolicyManager) UpsertPermissionPreset(name string, preset *Permission) error {
+	if err := pm.UpdatePermissionPreset(name, preset); err != nil {
 		if _, ok := err.(*PermissionPresetNotFoundError); ok {
-			return pm.AddPermissionPreset(preset)
+			return pm.AddPermissionPreset(name, preset)
 		}
 
 		return err
@@ -337,7 +337,7 @@ func (pm *PolicyManager) UpsertPermissionPreset(preset *PermissionPreset) error 
 	return nil
 }
 
-// DeletePermissionPreset - removes PermissionPreset with given name.
+// DeletePermissionPreset - removes Permission preset with given name.
 // Saves with StorageAdapter if autoUpdate is set to true.
 func (pm *PolicyManager) DeletePermissionPreset(name string) error {
 	pm.Lock()
@@ -391,7 +391,7 @@ func (pm *PolicyManager) getRole(roleID string) *Role {
 }
 
 // getPermissionPreset - helper function for getting PermissionPreset from PolicyDefinition.
-func (pm *PolicyManager) getPermissionPreset(name string) *PermissionPreset {
+func (pm *PolicyManager) getPermissionPreset(name string) *Permission {
 	preset, ok := pm.policy.PermissionPresets[name]
 
 	if !ok {
