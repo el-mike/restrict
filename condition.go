@@ -161,8 +161,11 @@ type ConditionFatoriesMap = map[string]ConditionFactory
 // ConditionFactories - stores a map of functions responsible for
 // creating new Conditions, based on their names.
 var ConditionFactories = ConditionFatoriesMap{
-	IsEqualConditionType: func() Condition {
-		return new(IsEqualCondition)
+	EqualConditionType: func() Condition {
+		return new(EqualCondition)
+	},
+	NotEqualConditionType: func() Condition {
+		return new(NotEqualCondition)
 	},
 }
 
