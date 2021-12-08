@@ -15,6 +15,19 @@ func TestValueDescriptorSuite(t *testing.T) {
 	suite.Run(t, new(valueDescriptorSuite))
 }
 
+func (s *valueDescriptorSuite) TestGetValue_NilDescriptor() {
+	var desc *ValueDescriptor = nil
+
+	assert.NotPanics(s.T(), func() { desc.GetValue(&AccessRequest{}) }) //nolint
+
+	value, err := desc.GetValue(&AccessRequest{})
+
+	assert.Nil(s.T(), value)
+
+	assert.IsType(s.T(), new(ValueDescriptorMalformedError), err)
+
+}
+
 func (s *valueDescriptorSuite) TestGetValue_Explicit() {
 	testRequest := &AccessRequest{}
 

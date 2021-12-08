@@ -201,14 +201,14 @@ func (e *ConditionFactoryNotFoundError) Error() string {
 
 // ValueDescriptorMalformedError - thrown when malformed ValueDescriptor is being resolved.
 type ValueDescriptorMalformedError struct {
-	descriptor ValueDescriptor
+	descriptor *ValueDescriptor
 	reason     error
 }
 
 // newValueDescriptorMalformedError - returns new ValueDescriptorMalformedError instance.
 func newValueDescriptorMalformedError(descriptor *ValueDescriptor, reason error) *ValueDescriptorMalformedError {
 	return &ValueDescriptorMalformedError{
-		descriptor: *descriptor,
+		descriptor: descriptor,
 		reason:     reason,
 	}
 }
@@ -225,7 +225,7 @@ func (e *ValueDescriptorMalformedError) Reason() error {
 
 // FailedDescriptor - returns failed ValueDescriptor.
 func (e *ValueDescriptorMalformedError) FailedDescriptor() *ValueDescriptor {
-	return &e.descriptor
+	return e.descriptor
 }
 
 // ConditionNotSatisfiedError - thrown when given Condition was not satisfied due to
