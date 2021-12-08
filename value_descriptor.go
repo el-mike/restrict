@@ -18,6 +18,10 @@ type ValueDescriptor struct {
 
 // GetValue - returns real value represented by given ValueDescriptor.
 func (vd *ValueDescriptor) GetValue(request *AccessRequest) (interface{}, error) {
+	if vd == nil {
+		return nil, newValueDescriptorMalformedError(vd, fmt.Errorf("ValueDescriptor cannot be nil"))
+	}
+
 	if vd.Source == Explicit {
 		return vd.Value, nil
 	}
