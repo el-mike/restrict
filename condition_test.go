@@ -368,7 +368,9 @@ func (s *conditionsSuite) TestMarshalYAML_InvalidCondition() {
 }
 
 func (s *conditionsSuite) TestFactories() {
-	isEqualConditionFactory := ConditionFactories[IsEqualConditionType]
+	equalConditionFactory := ConditionFactories[EqualConditionType]
+	notEqualConditionFactory := ConditionFactories[NotEqualConditionType]
 
-	assert.IsType(s.T(), new(IsEqualCondition), isEqualConditionFactory())
+	assert.IsType(s.T(), new(EqualCondition), equalConditionFactory())
+	assert.IsType(s.T(), new(NotEqualCondition), notEqualConditionFactory())
 }
