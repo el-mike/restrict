@@ -167,6 +167,12 @@ var ConditionFactories = ConditionFatoriesMap{
 	NotEqualConditionType: func() Condition {
 		return new(NotEqualCondition)
 	},
+	EmptyConditionType: func() Condition {
+		return new(EmptyCondition)
+	},
+	NotEmptyConditionType: func() Condition {
+		return new(NotEmptyCondition)
+	},
 }
 
 // RegisterConditionFactory - adds a new ConditionFactory under given name. If given name

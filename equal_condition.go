@@ -5,27 +5,32 @@ import (
 	"reflect"
 )
 
-// EqualConditionType - EqualCondition's identifier.
-const EqualConditionType string = "EQUAL"
-const NotEqualConditionType string = "NOT_EQUAL"
+const (
+	// EqualConditionType - EqualCondition's type identifier.
+	EqualConditionType = "EQUAL"
+	//NotEqualConditionType - NotEqualCondition's type identifier.
+	NotEqualConditionType = "NOT_EQUAL"
+)
 
-// EqualCondition - Condition for testing whether given value is equal
-// to some other value.
-type EqualCondition struct {
-	// Name - Condition's name, useful when there is a need to identify failing Condition.
-	Name string `json:"name,omitempty" yaml:"name,omitempty"`
+// baseEqualCondition - describes fields needed by Equal/NotEqual Conditions.
+type baseEqualCondition struct {
+	// ID - Condition's id, useful when there is a need to identify failing Condition.
+	ID string `json:"name,omitempty" yaml:"name,omitempty"`
 	// Left - ValueDescriptor for left operand of equality check.
-	Left *ValueDescriptor `json:"value,omitempty" yaml:"value,omitempty"`
+	Left *ValueDescriptor `json:"left" yaml:"left"`
 	// Right - ValueDescriptor for right operand of equality check.
-	Right *ValueDescriptor `json:"equals,omitempty" yaml:"equals,omitempty"`
+	Right *ValueDescriptor `json:"right" yaml:"right"`
 }
 
-// Name - returns Condition's name.
+// EqualCondition - checks whether given value (Left) is equal to some other value (Right).
+type EqualCondition baseEqualCondition
+
+// Type - returns Condition's type.
 func (c *EqualCondition) Type() string {
 	return EqualConditionType
 }
 
-// Check - returns true if Condition is satisfied, false otherwise.
+// Check - returns true if values are equal, false otherwise.
 func (c *EqualCondition) Check(request *AccessRequest) error {
 	left, right, err := unpackDescriptors(c.Left, c.Right, request)
 	if err != nil {
@@ -39,23 +44,15 @@ func (c *EqualCondition) Check(request *AccessRequest) error {
 	return nil
 }
 
-// EqualCondition - Condition for testing whether given value is not equal
-// to some other value.
-type NotEqualCondition struct {
-	// Name - Condition's name, useful when there is a need to identify failing Condition.
-	Name string `json:"name,omitempty" yaml:"name,omitempty"`
-	// Left - ValueDescriptor for left operand of equality check.
-	Left *ValueDescriptor `json:"value,omitempty" yaml:"value,omitempty"`
-	// Right - ValueDescriptor for right operand of equality check.
-	Right *ValueDescriptor `json:"equals,omitempty" yaml:"equals,omitempty"`
-}
+// EqualCondition - checks whether given value (Left) is not equal to some other value (Right).
+type NotEqualCondition baseEqualCondition
 
-// Name - returns Condition's name.
+// Type - returns Condition's type.
 func (c *NotEqualCondition) Type() string {
 	return NotEqualConditionType
 }
 
-// Check - returns true if Condition is satisfied, false otherwise.
+// Check - returns true if values are not equal, false otherwise.
 func (c *NotEqualCondition) Check(request *AccessRequest) error {
 	left, right, err := unpackDescriptors(c.Left, c.Right, request)
 	if err != nil {
