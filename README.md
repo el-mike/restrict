@@ -21,7 +21,7 @@ go get github.com/el-Mike/restrict
 ## Concepts
 Restrict helps with building simple yet powerful access policies in declarative way. In order to do that, we introduce following concepts:
 * **Subject** - an entity that wants to perform some actions. Needs to implement Subject interface and provide unique role name. Subject is usually any kind of user in your application. 
-* **Resource** - an entity that is a target of the actions. Needs to implement Resource interface and provide unique resource name. Resource can be implemented by any entity in your domain.
+* **Resource** - an entity that is a target of the actions. Needs to implement Resource interface and provide unique resource name. Resource can be implemented by any entity or object in your domain.
 * **Action** - an arbitrary operation that can be performed on given Resource.
 * **Context** - a map of values containing any additional data needed to validate the access rights.
 
