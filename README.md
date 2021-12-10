@@ -64,12 +64,9 @@ func main() {
 
 	manager := restrict.NewAccessManager(policyMananger)
 
-	user := &User{}
-	conversation := &Conversation{}
-
 	if err = manager.Authorize(&restrict.AccessRequest{
-		Subject:  user,
-		Resource: conversation,
+		Subject:  &User{},
+		Resource: &Conversation{},
 		Actions:  []string{"read", "delete"},
 	}); err != nil {
 		fmt.Print(err) // Access denied for action: "delete". Reason: Permission for action: "delete" is not granted for Resource: "Conversation"
