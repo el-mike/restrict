@@ -32,7 +32,7 @@ func (c *EqualCondition) Type() string {
 
 // Check - returns true if values are equal, false otherwise.
 func (c *EqualCondition) Check(request *AccessRequest) error {
-	left, right, err := unpackDescriptors(c.Left, c.Right, request)
+	left, right, err := unpackEqualDescriptors(c.Left, c.Right, request)
 	if err != nil {
 		return err
 	}
@@ -54,7 +54,7 @@ func (c *NotEqualCondition) Type() string {
 
 // Check - returns true if values are not equal, false otherwise.
 func (c *NotEqualCondition) Check(request *AccessRequest) error {
-	left, right, err := unpackDescriptors(c.Left, c.Right, request)
+	left, right, err := unpackEqualDescriptors(c.Left, c.Right, request)
 	if err != nil {
 		return err
 	}
@@ -67,7 +67,7 @@ func (c *NotEqualCondition) Check(request *AccessRequest) error {
 }
 
 // unpackDescriptors - helper function for unpacking ValueDescriptors' values.
-func unpackDescriptors(left, right *ValueDescriptor, request *AccessRequest) (interface{}, interface{}, error) {
+func unpackEqualDescriptors(left, right *ValueDescriptor, request *AccessRequest) (interface{}, interface{}, error) {
 	leftValue, err := left.GetValue(request)
 	if err != nil {
 		return nil, nil, err
