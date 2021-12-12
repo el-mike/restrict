@@ -17,12 +17,12 @@ func (c *hasUserCondition) Type() string {
 func (c *hasUserCondition) Check(request *restrict.AccessRequest) error {
 	user, ok := request.Subject.(*User)
 	if !ok {
-		return fmt.Errorf("Subject has to be a User")
+		return restrict.NewConditionNotSatisfiedError(c, request, fmt.Errorf("Subject has to be a User"))
 	}
 
 	conversation, ok := request.Resource.(*Conversation)
 	if !ok {
-		return fmt.Errorf("Resource has to be a Conversation")
+		return restrict.NewConditionNotSatisfiedError(c, request, fmt.Errorf("Resource has to be a Conversation"))
 	}
 
 	for _, userId := range conversation.UserIds {
@@ -31,5 +31,5 @@ func (c *hasUserCondition) Check(request *restrict.AccessRequest) error {
 		}
 	}
 
-	return fmt.Errorf("User does not belong to Conversation with ID: %s", conversation.ID)
+	return restrict.NewConditionNotSatisfiedError(c, request, fmt.Errorf("User does not belong to Conversation with ID: %s", conversation.ID))
 }
