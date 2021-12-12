@@ -38,23 +38,6 @@ func (e *RoleAlreadyExistsError) Error() string {
 	return fmt.Sprintf("Role with ID: \"%s\" already exists", e.roleID)
 }
 
-// NoAvailablePermissionsError - thrown when no Permissions are available for given role.
-type NoAvailablePermissionsError struct {
-	roleID string
-}
-
-// newNoAvailablePermissionsError - returns new NoAvailablePermissionsError instance.
-func newNoAvailablePermissionsError(roleID string) *NoAvailablePermissionsError {
-	return &NoAvailablePermissionsError{
-		roleID: roleID,
-	}
-}
-
-// Error - error interface implementation.
-func (e *NoAvailablePermissionsError) Error() string {
-	return fmt.Sprintf("No permissions are available for role: \"%s\"", e.roleID)
-}
-
 // PermissionPresetNotFoundError - thrown when Permission specifies a preset which is not
 // defined in PermissionPresets on PolicyDefinition.
 type PermissionPresetNotFoundError struct {

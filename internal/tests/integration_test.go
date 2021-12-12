@@ -1,0 +1,164 @@
+package tests
+
+import (
+	"log"
+	"testing"
+
+	"github.com/el-Mike/restrict"
+	"github.com/el-Mike/restrict/adapters"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
+)
+
+type integrationSuite struct {
+	suite.Suite
+
+	testUserId string
+}
+
+func TestPoliciesSuite(t *testing.T) {
+	suite.Run(t, new(integrationSuite))
+}
+
+func (s *integrationSuite) SetupSuite() {
+	s.testUserId = "testUser1"
+
+	//nolint
+	restrict.RegisterConditionFactory(hasUserConditionType, func() restrict.Condition {
+		return new(hasUserCondition)
+	})
+}
+
+func (s *integrationSuite) TestRestrict() {
+	policyManager, err := restrict.NewPolicyManager(adapters.NewInMemoryAdapter(PolicyOne), true)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	s.testPolicy(policyManager)
+}
+
+func (s *integrationSuite) TestRestrict_JSON() {
+	jsonAdapter := adapters.NewFileAdapter("test_policy.json", adapters.JSONFile)
+
+	policyManager, err := restrict.NewPolicyManager(jsonAdapter, true)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	s.testPolicy(policyManager)
+}
+
+func (s *integrationSuite) TestRestrict_YAML() {
+	yamlAdapter := adapters.NewFileAdapter("test_policy.yaml", adapters.YAMLFile)
+
+	policyManager, err := restrict.NewPolicyManager(yamlAdapter, true)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	s.testPolicy(policyManager)
+}
+
+func (s *integrationSuite) testPolicy(policyManager *restrict.PolicyManager) {
+	user := &User{
+		ID:   s.testUserId,
+		Role: UserRole,
+	}
+
+	conversation := &Conversation{
+		ID:        "testConversation1",
+		CreatedBy: "otherUser1",
+		Active:    true,
+	}
+
+	manager := restrict.NewAccessManager(policyManager)
+
+	// "read" is not granted - Conversation is not created by given User.
+	err := manager.Authorize(&restrict.AccessRequest{
+		Subject:  user,
+		Resource: conversation,
+		Actions:  []string{"read"},
+	})
+
+	assert.IsType(s.T(), new(restrict.AccessDeniedError), err)
+	assert.IsType(s.T(), new(restrict.ConditionNotSatisfiedError), err.(*restrict.AccessDeniedError).Reason())
+
+	conversation.CreatedBy = s.testUserId
+
+	// "modify" is not granted.
+	err = manager.Authorize(&restrict.AccessRequest{
+		Subject:  user,
+		Resource: conversation,
+		Actions:  []string{"read", "modify"},
+	})
+
+	assert.IsType(s.T(), new(restrict.AccessDeniedError), err)
+	assert.IsType(s.T(), new(restrict.PermissionNotGrantedError), err.(*restrict.AccessDeniedError).Reason())
+
+	// "delete" condition not satisfied - Conversation must be unactive.
+	err = manager.Authorize(&restrict.AccessRequest{
+		Subject:  user,
+		Resource: conversation,
+		Actions:  []string{"delete"},
+	})
+
+	assert.IsType(s.T(), new(restrict.AccessDeniedError), err)
+
+	conditionErr := err.(*restrict.AccessDeniedError).Reason()
+	assert.IsType(s.T(), new(restrict.ConditionNotSatisfiedError), conditionErr)
+
+	condition := conditionErr.(*restrict.ConditionNotSatisfiedError).FailedCondition().(*restrict.EmptyCondition)
+	assert.Equal(s.T(), "deleteActive", condition.ID)
+
+	// User CAN read itself
+	err = manager.Authorize(&restrict.AccessRequest{
+		Subject:  user,
+		Resource: user,
+		Actions:  []string{"read"},
+	})
+
+	assert.Nil(s.T(), err)
+
+	// User can NOT create other users
+	err = manager.Authorize(&restrict.AccessRequest{
+		Subject:  user,
+		Resource: &User{},
+		Actions:  []string{"create"},
+	})
+
+	assert.IsType(s.T(), new(restrict.AccessDeniedError), err)
+
+	// Admin CAN create other users
+	admin := &User{
+		ID:   "admin1",
+		Role: AdminRole,
+	}
+
+	err = manager.Authorize(&restrict.AccessRequest{
+		Subject:  admin,
+		Resource: &User{},
+		Actions:  []string{"create"},
+	})
+
+	assert.Nil(s.T(), err)
+
+	// Admin CAN create Converation because inherits from User.
+	err = manager.Authorize(&restrict.AccessRequest{
+		Subject:  admin,
+		Resource: &Conversation{},
+		Actions:  []string{"create"},
+	})
+
+	assert.Nil(s.T(), err)
+
+	// Admin CAN read any Converation, because it has unconditional read permission
+	// (along with conditional one inherited from User).
+	err = manager.Authorize(&restrict.AccessRequest{
+		Subject:  admin,
+		Resource: conversation,
+		Actions:  []string{"read"},
+	})
+
+	assert.Nil(s.T(), err)
+}

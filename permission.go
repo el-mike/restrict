@@ -24,7 +24,10 @@ func (p *Permission) mergePreset(preset *Permission) {
 		return
 	}
 
-	p.Action = preset.Action
+	// Apply the action only if Permission does not specify its own.
+	if p.Action == "" {
+		p.Action = preset.Action
+	}
 
 	// If given Permission should extend preset's Conditions, we merge both
 	// Condition maps. Otherwise, we just reassign it.

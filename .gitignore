@@ -3,3 +3,4 @@
 rules.txt
 
 **/coverage.out
+**/debug.test

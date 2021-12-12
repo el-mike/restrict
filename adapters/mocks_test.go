@@ -20,7 +20,8 @@ const BasicConditionOne = "BASIC_CONDITION_ONE"
 const BasicConditionTwo = "BASIC_CONDITION_TWO"
 
 func getBasicPolicyJSONString() string {
-	return fmt.Sprintf(`{
+	return fmt.Sprintf(`
+	{
 		"roles": {
 			"%s": {
 				"id": "%s",
@@ -28,7 +29,7 @@ func getBasicPolicyJSONString() string {
 				"grants": {
 					"%s": [
 						{ "action": "%s" },
-						{ "action: "%s" }
+						{ "action": "%s" }
 					]
 				}
 			}
@@ -43,15 +44,15 @@ func getBasicPolicyJSONString() string {
 
 func getBasicPolicyYAMLString() string {
 	return fmt.Sprintf(`
-		roles:
-			%s:
-				id: %s,
-				description: "Basic role",
-				grants:
-					%s:
-						- action: %s
-						- action: %s
-	`, basicRoleName,
+roles:
+  %s:
+    id: %s
+    description: "Basic role"
+    grants:
+      %s:
+        - action: %s
+        - action: %s
+`, basicRoleName,
 		basicRoleName,
 		basicResourceOneName,
 		createAction,

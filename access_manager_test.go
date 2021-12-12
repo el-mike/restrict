@@ -131,6 +131,7 @@ func (s *accessManagerSuite) TestAuthorize_NoPermissions() {
 	testRequest := &AccessRequest{
 		Subject:  testSubject,
 		Resource: testResource,
+		Actions:  []string{"testAction"},
 	}
 
 	err := manager.Authorize(testRequest)
@@ -146,23 +147,14 @@ func (s *accessManagerSuite) TestAuthorize_NoPermissions() {
 
 	err = manager.Authorize(testRequest)
 
-	assert.IsType(s.T(), new(NoAvailablePermissionsError), err)
+	assert.IsType(s.T(), new(AccessDeniedError), err)
 
 	// 0 length grants.
 	testRole.Grants = GrantsMap{}
 
 	err = manager.Authorize(testRequest)
 
-	assert.IsType(s.T(), new(NoAvailablePermissionsError), err)
-
-	// 0 length grants with parents.
-	testRole.Parents = []string{"TestParentOne"}
-
-	err = manager.Authorize(testRequest)
-
-	// Err is nil, because no actions are passed, meaning that Request is granted.
-	assert.Nil(s.T(), err)
-
+	assert.IsType(s.T(), new(AccessDeniedError), err)
 }
 
 func (s *accessManagerSuite) TestAuthorize_ActionsWithoutConditions() {
