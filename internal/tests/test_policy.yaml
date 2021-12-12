@@ -10,8 +10,13 @@ permissionPresets:
                 right:
                     source: SubjectField
                     field: ID
-    readOwn:
+    readWhereBelongs:
         action: read
+        conditions:
+            - type: BELONGS_TO
+              options: {}
+    updateOwn:
+        action: update
         conditions:
             - type: EQUAL
               options:
@@ -38,11 +43,34 @@ roles:
         grants:
             User:
                 - action: read
-                  preset: accessSelf
+                  conditions:
+                    - type: EQUAL
+                      options:
+                        name: self
+                        left:
+                            source: ResourceField
+                            field: ID
+                        right:
+                            source: SubjectField
+                            field: ID
     User:
         grants:
             Conversation:
-                - preset: readOwn
+                - action: read
+                  conditions:
+                    - type: BELONGS_TO
+                      options: {}
+                - action: update
+                  conditions:
+                    - type: EQUAL
+                      options:
+                        name: isOwner
+                        left:
+                            source: ResourceField
+                            field: CreatedBy
+                        right:
+                            source: SubjectField
+                            field: ID
                 - action: create
                 - action: delete
                   conditions:
