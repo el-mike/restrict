@@ -4,8 +4,8 @@ import "github.com/el-Mike/restrict"
 
 var PolicyOne = &restrict.PolicyDefinition{
 	PermissionPresets: restrict.PermissionPresets{
-		"readOwn": &restrict.Permission{
-			Action: "read",
+		"updateOwn": &restrict.Permission{
+			Action: "update",
 			Conditions: restrict.Conditions{
 				&restrict.EqualCondition{
 					ID: "isOwner",
@@ -18,6 +18,12 @@ var PolicyOne = &restrict.PolicyDefinition{
 						Field:  "ID",
 					},
 				},
+			},
+		},
+		"readWhereBelongs": &restrict.Permission{
+			Action: "read",
+			Conditions: restrict.Conditions{
+				&hasUserCondition{},
 			},
 		},
 		"accessSelf": &restrict.Permission{
@@ -51,7 +57,8 @@ var PolicyOne = &restrict.PolicyDefinition{
 			Parents: []string{BasicUserRole},
 			Grants: restrict.GrantsMap{
 				ConversationResource: {
-					&restrict.Permission{Preset: "readOwn"},
+					&restrict.Permission{Preset: "readWhereBelongs"},
+					&restrict.Permission{Preset: "updateOwn"},
 					&restrict.Permission{Action: "create"},
 					&restrict.Permission{
 						Action: "delete",

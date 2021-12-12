@@ -29,15 +29,6 @@ func (s *integrationSuite) SetupSuite() {
 	})
 }
 
-func (s *integrationSuite) TestRestrict() {
-	policyManager, err := restrict.NewPolicyManager(adapters.NewInMemoryAdapter(PolicyOne), true)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	s.testPolicy(policyManager)
-}
-
 func (s *integrationSuite) TestRestrict_JSON() {
 	jsonAdapter := adapters.NewFileAdapter("test_policy.json", adapters.JSONFile)
 
@@ -60,6 +51,15 @@ func (s *integrationSuite) TestRestrict_YAML() {
 	s.testPolicy(policyManager)
 }
 
+func (s *integrationSuite) TestRestrict() {
+	policyManager, err := restrict.NewPolicyManager(adapters.NewInMemoryAdapter(PolicyOne), true)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	s.testPolicy(policyManager)
+}
+
 func (s *integrationSuite) testPolicy(policyManager *restrict.PolicyManager) {
 	user := &User{
 		ID:   s.testUserId,
@@ -69,12 +69,13 @@ func (s *integrationSuite) testPolicy(policyManager *restrict.PolicyManager) {
 	conversation := &Conversation{
 		ID:        "testConversation1",
 		CreatedBy: "otherUser1",
+		UserIds:   []string{},
 		Active:    true,
 	}
 
 	manager := restrict.NewAccessManager(policyManager)
 
-	// "read" is not granted - Conversation is not created by given User.
+	// "read" is not granted - User does not belong to the Conversation.
 	err := manager.Authorize(&restrict.AccessRequest{
 		Subject:  user,
 		Resource: conversation,
@@ -84,7 +85,27 @@ func (s *integrationSuite) testPolicy(policyManager *restrict.PolicyManager) {
 	assert.IsType(s.T(), new(restrict.AccessDeniedError), err)
 	assert.IsType(s.T(), new(restrict.ConditionNotSatisfiedError), err.(*restrict.AccessDeniedError).Reason())
 
+	// "read" granted - User belongs to the Conversation.
+	conversation.UserIds = []string{s.testUserId}
+
+	err = manager.Authorize(&restrict.AccessRequest{
+		Subject:  user,
+		Resource: conversation,
+		Actions:  []string{"read"},
+	})
+
+	assert.Nil(s.T(), err)
+
+	// "update" granted - User owns the conversation.
 	conversation.CreatedBy = s.testUserId
+
+	err = manager.Authorize(&restrict.AccessRequest{
+		Subject:  user,
+		Resource: conversation,
+		Actions:  []string{"update"},
+	})
+
+	assert.Nil(s.T(), err)
 
 	// "modify" is not granted.
 	err = manager.Authorize(&restrict.AccessRequest{

@@ -38,7 +38,7 @@ func (c *EqualCondition) Check(request *AccessRequest) error {
 	}
 
 	if !reflect.DeepEqual(left, right) {
-		return newConditionNotSatisfiedError(c, request, fmt.Errorf("Values \"%v\" and \"%v\" are not equal", left, right))
+		return NewConditionNotSatisfiedError(c, request, fmt.Errorf("Values \"%v\" and \"%v\" are not equal", left, right))
 	}
 
 	return nil
@@ -60,7 +60,7 @@ func (c *NotEqualCondition) Check(request *AccessRequest) error {
 	}
 
 	if reflect.DeepEqual(left, right) {
-		return newConditionNotSatisfiedError(c, request, fmt.Errorf("Values \"%v\" and \"%v\" are equal", left, right))
+		return NewConditionNotSatisfiedError(c, request, fmt.Errorf("Values \"%v\" and \"%v\" are equal", left, right))
 	}
 
 	return nil

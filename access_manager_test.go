@@ -236,7 +236,7 @@ func (s *accessManagerSuite) TestAuthorize_ActionsWithConditions() {
 
 	// Failing Condition
 	testFailingCondition := new(conditionMock)
-	testConditionError := newConditionNotSatisfiedError(testFailingCondition, testRequest, s.testError)
+	testConditionError := NewConditionNotSatisfiedError(testFailingCondition, testRequest, s.testError)
 
 	testFailingCondition.On("Check", mock.Anything).Return(testConditionError)
 

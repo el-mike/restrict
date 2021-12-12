@@ -219,8 +219,8 @@ type ConditionNotSatisfiedError struct {
 	reason    error
 }
 
-// newConditionNotSatisfiedError - returns new ConditionNotSatisfiedError instance.
-func newConditionNotSatisfiedError(condition Condition, request *AccessRequest, reason error) *ConditionNotSatisfiedError {
+// NewConditionNotSatisfiedError - returns new ConditionNotSatisfiedError instance.
+func NewConditionNotSatisfiedError(condition Condition, request *AccessRequest, reason error) *ConditionNotSatisfiedError {
 	return &ConditionNotSatisfiedError{
 		condition: condition,
 		request:   request,
