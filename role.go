@@ -12,7 +12,7 @@ type GrantsMap map[string]Permissions
 // Role - describes privileges of a Role's members.
 type Role struct {
 	// ID - unique identifier of the Role.
-	ID string
+	ID string `json:"-" yaml:"-"`
 	// Description - optional description for a Role.
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
 	// Grants - contains sets of Permissions assigned to Resources.
@@ -26,10 +26,8 @@ type Role struct {
 type Roles map[string]*Role
 
 // UnmarshalJSON - unmarshals a JSON-coded map of Roles.
-func (rs Roles) UnmarshalJSON(jsonData []byte) error {
-	if rs == nil {
-		rs = Roles{}
-	}
+func (rs *Roles) UnmarshalJSON(jsonData []byte) error {
+	*rs = Roles{}
 
 	var jsonRoles map[string]*Role
 
@@ -39,17 +37,15 @@ func (rs Roles) UnmarshalJSON(jsonData []byte) error {
 
 	for key, role := range jsonRoles {
 		role.ID = key
-		rs[key] = role
+		(*rs)[key] = role
 	}
 
 	return nil
 }
 
 // UnmarshalYAML - unmarshals a YAML-coded map of Roles.
-func (rs Roles) UnmarshalYAML(value *yaml.Node) error {
-	if rs == nil {
-		rs = Roles{}
-	}
+func (rs *Roles) UnmarshalYAML(value *yaml.Node) error {
+	*rs = Roles{}
 
 	var yamlRoles map[string]*Role
 
@@ -59,7 +55,7 @@ func (rs Roles) UnmarshalYAML(value *yaml.Node) error {
 
 	for key, role := range yamlRoles {
 		role.ID = key
-		rs[key] = role
+		(*rs)[key] = role
 	}
 
 	return nil

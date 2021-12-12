@@ -3,7 +3,7 @@ package restrict
 import (
 	"fmt"
 
-	"github.com/el-Mike/restrict/utils"
+	"github.com/el-Mike/restrict/internal/utils"
 )
 
 // ValueDescriptor - describes a value that will be tested in its parent Condition.

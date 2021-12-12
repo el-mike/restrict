@@ -41,18 +41,15 @@ func (am *AccessManager) authorize(request *AccessRequest, roleName, resourceNam
 		return err
 	}
 
+	var grants Permissions
+
 	if role.Grants == nil {
-		return newNoAvailablePermissionsError(role.ID)
+		grants = Permissions{}
+	} else {
+		grants = role.Grants[resourceName]
 	}
 
-	grants := role.Grants[resourceName]
 	parents := role.Parents
-
-	// If given role has no permissions granted, and no parents to
-	// fall back on, return an error.
-	if len(grants) == 0 && len(parents) == 0 {
-		return newNoAvailablePermissionsError(role.ID)
-	}
 
 	for _, action := range request.Actions {
 		if action == "" {
@@ -68,6 +65,7 @@ func (am *AccessManager) authorize(request *AccessRequest, roleName, resourceNam
 
 			for _, parent := range parents {
 				parentRequest := &AccessRequest{
+					Subject:  request.Subject,
 					Resource: request.Resource,
 					Actions:  []string{action},
 					Context:  request.Context,
@@ -108,7 +106,6 @@ func (am *AccessManager) authorize(request *AccessRequest, roleName, resourceNam
 func (am *AccessManager) isAccessError(err error) bool {
 	switch err.(type) {
 	case *ConditionNotSatisfiedError,
-		*NoAvailablePermissionsError,
 		*PermissionNotGrantedError,
 		*AccessDeniedError:
 		return true

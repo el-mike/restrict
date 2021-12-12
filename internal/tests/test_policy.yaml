@@ -1,0 +1,56 @@
+permissionPresets:
+    accessSelf:
+        conditions:
+            - type: EQUAL
+              options:
+                name: self
+                left:
+                    source: ResourceField
+                    field: ID
+                right:
+                    source: SubjectField
+                    field: ID
+    readOwn:
+        action: read
+        conditions:
+            - type: EQUAL
+              options:
+                name: isOwner
+                left:
+                    source: ResourceField
+                    field: CreatedBy
+                right:
+                    source: SubjectField
+                    field: ID
+roles:
+    Admin:
+        grants:
+            Conversation:
+                - action: read
+            User:
+                - action: create
+                - action: read
+                - action: update
+                - action: delete
+        parents:
+            - User
+    BasicUser:
+        grants:
+            User:
+                - action: read
+                  preset: accessSelf
+    User:
+        grants:
+            Conversation:
+                - preset: readOwn
+                - action: create
+                - action: delete
+                  conditions:
+                    - type: EMPTY
+                      options:
+                        name: deleteActive
+                        value:
+                            source: ResourceField
+                            field: Active
+        parents:
+            - BasicUser

@@ -225,6 +225,25 @@ func (s *fileAdapterSuite) TestLoadPolicy_JSONFile() {
 	assert.Error(s.T(), err)
 }
 
+func (s *fileAdapterSuite) TestLoadPolicy_JSONReal() {
+	testData := []byte(getBasicPolicyJSONString())
+
+	testFileHandler := new(fileHandlerMock)
+	testFileHandler.On(
+		"ReadFile",
+		mock.Anything,
+	).Return(testData, nil)
+
+	adapter := NewFileAdapter("test.json", JSONFile)
+
+	adapter.fileHandler = testFileHandler
+
+	policy, err := adapter.LoadPolicy()
+
+	assert.Nil(s.T(), err)
+	assert.Equal(s.T(), 1, len(policy.Roles))
+}
+
 func (s *fileAdapterSuite) TestLoadPolicy_YAMLFile() {
 	// Load with working yamlHandler
 	testData := []byte(getBasicPolicyYAMLString())
@@ -268,6 +287,25 @@ func (s *fileAdapterSuite) TestLoadPolicy_YAMLFile() {
 
 	assert.Nil(s.T(), policy)
 	assert.Error(s.T(), err)
+}
+
+func (s *fileAdapterSuite) TestLoadPolicy_YAMLReal() {
+	testData := []byte(getBasicPolicyYAMLString())
+
+	testFileHandler := new(fileHandlerMock)
+	testFileHandler.On(
+		"ReadFile",
+		mock.Anything,
+	).Return(testData, nil)
+
+	adapter := NewFileAdapter("test.yml", YAMLFile)
+
+	adapter.fileHandler = testFileHandler
+
+	policy, err := adapter.LoadPolicy()
+
+	assert.Nil(s.T(), err)
+	assert.Equal(s.T(), 1, len(policy.Roles))
 }
 
 func (s *fileAdapterSuite) TestSavePolicy() {
