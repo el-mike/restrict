@@ -22,6 +22,7 @@ Restrict is a authorization library that provides a hybrid of RBAC and ABAC mode
 	* [Custom Conditions](#custom-conditions)
 * [Presets](#presets)
 * [PolicyManager and persistence](#policymanager-and-persistence)
+	* [Adapters](#adapters)
 
 ## Installation
 To install the library, run:
@@ -579,6 +580,9 @@ All of the checking logic is up to you - restrict only provides some building bl
 TBD
 
 ## PolicyManager and persistence
+TBD
+
+### Adapters
 TBD
 
 ## Development
