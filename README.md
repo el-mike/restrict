@@ -17,6 +17,7 @@ Restrict is a authorization library that provides a hybrid of RBAC and ABAC mode
 		* [Empty Condition](#empty-condition)
 		* [Equal Condition](#equal-condition)
 	* [Value Descriptor](#value-descriptor)
+	* [Composition](#composition)
 	* [Custom Conditions](#custom-conditions)
 
 ## Installation
@@ -324,6 +325,61 @@ condition := &exampleCondition{
 	},
 }
 ```
+
+### Composition
+Conditions can be composed in various ways, adding some flexibility to your policy. Let's consider following example:
+```go
+&restrict.Permission{
+	Action: "delete",
+	Conditions: restrict.Conditions{
+		&restrict.EmptyCondition{
+			ID: "ConditionOne",
+			// ... Conditions details
+		},
+		&restrict.NotEmptyCondition{
+			ID: "ConditionTwo",
+			// ... Conditions details
+		},
+		&restrict.EqualCondition{
+			ID: "ConditionThree",
+			// ... Conditions details
+		},
+	},
+}
+```
+In this case, 3 different **Conditions** need to be satisfied in order to grant permission for "delete" action. This way of defining Conditions works as **AND** operator - if just one of them fails, permission is not granted.
+
+But we could also define Conditions like so:
+```go
+&restrict.Permission{
+	Action: "delete",
+	Conditions: restrict.Conditions{
+		&restrict.EmptyCondition{
+			ID: "ConditionOne",
+			// ... Conditions details
+		},
+	},
+},
+&restrict.Permission{
+	Action: "delete",
+	Conditions: restrict.Conditions{
+		&restrict.NotEmptyCondition{
+			ID: "ConditionTwo",
+			// ... Conditions details
+		},
+	},
+},
+&restrict.Permission{
+	Action: "delete",
+	Conditions: restrict.Conditions{
+		&restrict.EqualCondition{
+			ID: "ConditionThree",
+			// ... Conditions details
+		},
+	},
+}
+```
+We have 3 different **Permissions** with different sets of Conditions - effectively making it an **OR** operation - just one set of the Conditions needs to be satisfy in order to grant permission for "delete" action.
 
 ### Custom Conditions
 You can add any number of Conditions to match requirements of your access policy. Condition needs to implement `Condition` interface:
