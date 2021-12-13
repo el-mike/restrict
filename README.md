@@ -2,7 +2,7 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/el-Mike/gochat)](https://goreportcard.com/report/github.com/el-Mike/restrict)
 ![License](https://img.shields.io/github/license/el-Mike/restrict)
-[![release](https://github.com/el-Mike/restrict/actions/workflows/release.yml/badge.svg)](https://github.com/el-Mike/restrict/actions/workflows/release.yml)
+[![master](https://github.com/el-Mike/restrict/actions/workflows/master.yml/badge.svg)](https://github.com/el-Mike/restrict/actions/workflows/master.yml)
 
 Restrict is a authorization library that provides a hybrid of RBAC and ABAC models, allowing to define simple role-based policies while using more fine-grained control when needed.
 
@@ -56,6 +56,8 @@ var policy = &restrict.PolicyDefinition{
 }
 
 func main() {
+	// Create an instance of PolicyManager, which will be responsible for handling given PolicyDefinition.
+	// You can use one of the built-in persistence adapters (in-memory or json/yaml file adapters), or provide your own.
 	policyMananger, err := restrict.NewPolicyManager(adapters.NewInMemoryAdapter(policy), true)
 	if err != nil {
 		log.Fatal(err)
