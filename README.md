@@ -11,6 +11,7 @@ Restrict is a authorization library that provides a hybrid of RBAC and ABAC mode
 * [Concepts](#concepts)
 * [Basic usage](#basic-usage)
 * [Policy](#policy)
+* [Access Request] (#access-request)
 
 ## Installation
 To install the library, run:
@@ -173,6 +174,49 @@ var policy = &restrict.PolicyDefinition{
 			},
 		},
 	},
+}
+```
+
+## Access Request
+`AccessRequest` is an object describing a question about the access - can **Subject** perform given **Actions** on particular **Resource**.
+
+If you only need RBAC-like functionality, or you want to perform "preliminary" access check (for example to just check if Subject can read given Resource at all, regardless of Conditions), empty Subject/Resource instances will be enough. Otherwise, Subject and Resource should be retrieved prior to authorization and passed along in AccessRequest.
+
+For example, in typical backend application, Subject (User) will likely come from request context. Resource (Conversation) can be fetched from the database. Entire authorization process, along with Subject/Resource retrieval, could take place in middleware function.
+
+Here is an example of AccessRequest:
+```go
+// ... manager setup
+
+// Create empty interfaces or provide the correct entitites.
+user := &User{}
+conversation := &Conversation{}
+
+accessRequest := &restrict.AccessRequest{
+	// Required - who wants to perform the actions. It has to be
+	// an instance of Subject interface. 
+	Subject: user,
+	// Required - on which Resource actions will be performed. It has to be
+	// an instance of Resource interface.
+	Resource: conversation,
+	// Required - operations that given Subject wants to perform.
+	Actions:  []string{"read", "create"},
+	// Optional, lets you to skip Conditions checking.
+	// Default: false.
+	SkipConditions: false,
+}
+
+// If the access is granted, err will be nil - otherwise,
+// an error will be returned containing an information about the failure.
+err = manager.Authorize(accessRequest)
+```
+
+Alternatively to empty Subject/Resource instances, there are two helper functions - `UseSubject()` and `UseResource()`, that can be useful when you don't want to create empty instances or given Subject/Resource in not represented by any type in your domain. In this case, you can use:
+```go
+accessRequest := &restrict.AccessRequest{
+	Subject:  restrict.UseSubject("User"),
+	Resource: restrict.UseResource("Conversation"),
+	Actions:  []string{"read", "create"},
 }
 ```
 
