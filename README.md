@@ -237,7 +237,7 @@ accessRequest := &restrict.AccessRequest{
 ```
 
 ## Access Manager
-`AccessManager` is responsible for the actual validation. Once set up with proper `PolicyManager` instance, you can use its `Authorize` method in order to check given `AccessRequest`. `Authorize` returns an error if access is not granted, and `nil` otherwise (meaning there is no error and the access is granted).
+`AccessManager` is responsible for the actual validation. Once set up with proper `PolicyManager` instance (see [PolicyManager and persistence](#policymanager-and-persistence) for details), you can use its `Authorize` method in order to check given `AccessRequest`. `Authorize` returns an error if access is not granted, and `nil` otherwise (meaning there is no error and the access is granted).
 
 ```go
 var policy = &restrict.PolicyDefinition{
@@ -258,6 +258,33 @@ accessRequest := &restrict.AccessRequest{
 
 // 
 err := manager.Authorize(accessRequest)
+```
+
+### AccessManager errors
+Since `Authorize` method depends on various operations, including external ones provided in a form of Conditions, its return type is a general `error` type. However, in order to provide easier error handling, when error is caused by policy validation only (i.e. Permission is not granted for given Role or Conditions were not satsified), `Authorize` returns an instance of `AccessDeniedError`, which has couple of helper methods.
+
+```go
+
+err := manager.Authorize(accessRequest)
+
+if accessError, ok := err.(*restrict.AccessDeniedError); ok {
+	// Error() implementation. Returns a message in a form:
+	// Access denied for action: "...". Reason: Permission for action: "..." is not granted for Resource: "..."
+	fmt.Print(accessError)
+	// Returns an AccessRequest that failed.
+	fmt.Print(accessError.FailedRequest())
+	// Returns underlying error which was the reason of a failure.
+	fmt.Print(accessError.Reason())
+
+	// If the reason of an AccessDeniedError was failed Condition,
+	// this helper method returns it directly. Otherwise, nil will be returned.
+	failedCondition := accessError.FailedCondition()
+
+	// You can later cast the Condition to the type you want.
+	if emptyCondition, ok := failedCondition.(*restrict.EmptyCondition); failedCondition != nil && ok {
+		fmt.Print(emptyCondition.ID)
+	}
+}
 ```
 
 ## Conditions
