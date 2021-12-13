@@ -12,6 +12,12 @@ Restrict is a authorization library that provides a hybrid of RBAC and ABAC mode
 * [Basic usage](#basic-usage)
 * [Policy](#policy)
 * [Access Request](#access-request)
+* [Conditions](#conditions)
+	* [Built-in Conditions](#built-in-conditions)
+		* [Empty Condition](#empty-condition)
+		* [Equal Condition](#equal-condition)
+	* [Value Descriptor](#value-descriptor)
+	* [Custom Conditions](#custom-conditions)
 
 ## Installation
 To install the library, run:
@@ -202,6 +208,11 @@ accessRequest := &restrict.AccessRequest{
 	Resource: conversation,
 	// Required - operations that given Subject wants to perform.
 	Actions:  []string{"read", "create"},
+	// Optional - a map of additional, external values that can be
+	// accessed by Conditions. Values can be of any type.
+	Context: restrict.Context{
+		"SomeField": "someValue",
+	},
 	// Optional, lets you to skip Conditions checking.
 	// Default: false.
 	SkipConditions: false,
@@ -220,6 +231,237 @@ accessRequest := &restrict.AccessRequest{
 	Actions:  []string{"read", "create"},
 }
 ```
+
+## Conditions
+Conditions allows to define more specific access control. It's similar to ABAC model, where more than just associated role need to be validated in order to grant the access. For example, a Subject can only update the Resource if it was created by it. Such a requirement can be expressed in Restrict as a Condition. If the Condition is not satsfied, access will not be granted, even if Subject does have the required Role.
+
+Restrict ships with couple of built-in Conditions, but any number of custom Conditions can be added.
+
+### Built-in Conditions
+
+### Empty Condition
+`EmptyCondition` and `NotEmptyCondition` allow to check if value described by ValueDescriptor is empty (not defined) or not empty (defined).
+```go
+&restrict.Permission{
+	// An action that given Permission allows to perform.
+	Action: "delete",
+	// Optional Conditions that when defined, need to be satisfied in order
+	// to allow the access.
+	Conditions: restrict.Conditions{
+		&restrict.EmptyCondition{ // or &restrict.NotEmptyCondition
+			// Optional - helps with identifying failing Condition when checking an error
+			// returned from .Authorized method.
+			ID: "deleteActive",
+			// Value to be checked.
+			Value: &restrict.ValueDescriptor{
+				Source: restrict.ResourceField,
+				Field:  "Active",
+			},
+		},
+	},
+}
+```
+
+### Equal Condition
+`EqualCondition` and `NotEqualCondition` allow to check if two values, described by ValueDescriptors, are equal or not.
+```go
+&restrict.Permission{
+	Action: "update",
+	Conditions: restrict.Conditions{
+		&restrict.EqualCondition{ // or &restrict.NotEqualCondition
+			ID: "isOwner",
+			// First value to compare.
+			Left: &restrict.ValueDescriptor{
+				Source: restrict.ResourceField,
+				Field:  "CreatedBy",
+			},
+			// Second value to compare.
+			Right: &restrict.ValueDescriptor{
+				Source: restrict.SubjectField,
+				Field:  "ID",
+			},
+		},
+	},
+},
+```
+
+### Value Descriptor
+`ValueDescriptor` is an object describing the value that needs to be retrieved from `AccessRequest` and tested by given Condition. `ValueDescriptor` allows to chdeck various attributes without coupling your domain's entities to the library itself or forcing you to implement arbitrary interfaces. It uses reflection to get needed values.
+
+`ValueDescriptor` needs to define value's source, which can be one of the predefined `ValueSource` enum type: `SubjectField`, `ResourceField`, `ContextField` or `Explicit`, and `Field` or `Value`, based on chosen source.
+```go
+type exampleCondition struct {
+	ValueFromSubject *restrict.ValueDescriptor
+	ValueFromResource *restrict.ValueDescriptor
+	ValueFromContext *restrict.ValueDescriptor
+	ExplicitValue *restrict.ValueDescriptor
+}
+
+condition := &exampleCondition{
+	// This value will be taken from Subject's "SomeField" passed in AccessRequest.
+	ValueFromSubject: &restrict.ValueDescriptor{
+		// Required, ValueSource enum.
+		Source: restrict.SubjectField,
+		// Optional, string.
+		Field: "SomeField",
+	},
+	// This value will be taken from Resource's "SomeField" passed in AccessRequest.
+	ValueFromResource: &restrict.ValueDescriptor{
+		Source: restrict.ResourceField,
+		Field: "SomeField",
+	},
+	// This value will be taken from Context's "SomeField" passed in AccessRequest.
+	ValueFromContext: &restrict.ValueDescriptor{
+		Source: restrict.ContextField,
+		Field: "SomeField",
+	},
+	// This value will be set explicitly to 10 - please note that we are using "Value"
+	// instead of "Field" here. "Value" can be of any type.
+	ExplicitValue: &restrict.ValueDescriptor{
+		Source: restrict.Explicit,
+		// Optional, interface{}.
+		Value: 10,
+	},
+}
+```
+
+### Custom Conditions
+You can add any number of Conditions to match requirements of your access policy. Condition needs to implement `Condition` interface:
+```go
+type Condition interface {
+	// Type - returns Condition's type. Type needs to be unique
+	// amongst other Conditions.
+	Type() string
+
+	// Check - returns true if Condition is satisfied by
+	// given AccessRequest, false otherwise.
+	Check(request *AccessRequest) error
+}
+
+```
+For example, sticking to previous examples with `User` and `Conversation`, we can consider a case where we want to allow the `User` to read a `Conversation` only if it participates in it. Such a Condition could look like this:
+```go
+// Type is spelled with upper case - it's not necessary, but built-in Conditions
+// follow this convention, to make a distinction between Condition type and other
+// tokens, like preset or role name.
+const hasUserConditionType = "BELONGS_TO"
+
+type hasUserCondition struct{}
+
+func (c *hasUserCondition) Type() string {
+	return hasUserConditionType
+}
+
+func (c *hasUserCondition) Check(request *restrict.AccessRequest) error {
+	user, ok := request.Subject.(*User)
+	if !ok {
+		return restrict.NewConditionNotSatisfiedError(c, request, fmt.Errorf("Subject has to be a User"))
+	}
+
+	conversation, ok := request.Resource.(*Conversation)
+	if !ok {
+		return restrict.NewConditionNotSatisfiedError(c, request, fmt.Errorf("Resource has to be a Conversation"))
+	}
+
+	for _, userId := range conversation.Participants {
+		if userId == user.ID {
+			return nil
+		}
+	}
+
+	return restrict.NewConditionNotSatisfiedError(c, request, fmt.Errorf("User does not belong to Conversation with ID: %s", conversation.ID))
+}
+
+// ... policy definition - "User" -> "Grants"
+ConversationResource: {
+	// ... other permissions
+	&restrict.Permission{
+		Action: "read",
+		Conditions: restrict.Conditions{
+			&hasUserCondition{},
+		},
+	},
+},
+
+// ... check
+user := &User{ID: "user-one"}
+conversation := &Conversation{Participants: []string{"user-one"}}
+
+err := manager.Authorize(&restrict.AccessRequest{
+	Subject:  user,
+	Resource: conversation,
+	Actions:  []string{"read"},
+})
+// err is nil - "user-one" belongs to conversation's Participants slice.
+```
+Or you could want to allow to delete a `Conversation` only when it has less than 100 messages. In this case, you could create more generalized `Condition`, using `ValueDescriptor`:
+```go
+const greatherThanType = "GREATER_THAN"
+
+type greaterThanCondition struct {
+	// Please note that this field needs to have json/yaml tags if
+	// you are using JSON/YAML based persistence.
+	Value *restrict.ValueDescriptor `json:"value" yaml:"value"`
+}
+
+func (c *greaterThanCondition) Type() string {
+	return greatherThanType
+}
+
+func (c *greaterThanCondition) Check(request *restrict.AccessRequest) error {
+	value, err := c.Value.GetValue(request)
+	if err != nil {
+		return err
+	}
+
+	intValue, ok := value.(int)
+	if !ok {
+		return restrict.NewConditionNotSatisfiedError(c, request, fmt.Errorf("Value has to be an integer"))
+	}
+
+	intMax, ok := request.Context["Max"].(int)
+	if !ok {
+		return restrict.NewConditionNotSatisfiedError(c, request, fmt.Errorf("Max has to be an integer"))
+	}
+
+	if intValue > intMax {
+		return restrict.NewConditionNotSatisfiedError(c, request, fmt.Errorf("Value is greater than max"))
+	}
+
+	return nil
+}
+
+// ... policy definition
+ConversationResource: {
+	// ... other permissions
+	&restrict.Permission{
+		Action: "delete",
+		Conditions: restrict.Conditions{
+			&greaterThanCondition{
+				Value: &restrict.ValueDescriptor{
+					Source: restrict.ResourceField,
+					Field:  "MessagesCount",
+				},
+			},
+		},
+	},
+},
+
+// ... check
+user := &User{}
+conversation := &Conversation{MessagesCount: 90}
+
+err = manager.Authorize(&restrict.AccessRequest{
+	Subject:  user,
+	Resource: conversation,
+	Actions:  []string{"update"},
+	Context: restrict.Context{
+		"Max": 100,
+	},
+})
+// err is nil - conversation has less than 100 messages.
+```
+
 
 ## Development
 ### Prerequisites
