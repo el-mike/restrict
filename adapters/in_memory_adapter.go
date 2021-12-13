@@ -2,7 +2,7 @@ package adapters
 
 import "github.com/el-Mike/restrict"
 
-// InMemoryAdapter - StorageAdapter implementation, providing in-memory persistance.
+// InMemoryAdapter - StorageAdapter implementation, providing in-memory persistence.
 type InMemoryAdapter struct {
 	policy *restrict.PolicyDefinition
 }

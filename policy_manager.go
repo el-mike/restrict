@@ -3,7 +3,7 @@ package restrict
 import "sync"
 
 // PolicyManager - an entity responsible for managing PolicyDefinition. It uses passed StorageAdapter
-// for policy persistance.
+// for policy persistence.
 type PolicyManager struct {
 	// StorageAdapter used to load and save policy.
 	adapter StorageAdapter

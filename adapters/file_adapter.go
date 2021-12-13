@@ -20,7 +20,7 @@ const defaultJSONIndent = "\t"
 // defaultFilePerm - default file's perm.
 const defaultFilePerm FilePerm = 0644
 
-// FileAdapter - StorageAdapter implementation, providing file-based persistance.
+// FileAdapter - StorageAdapter implementation, providing file-based persistence.
 // It can be configured to use JSON or YAML format.
 type FileAdapter struct {
 	fileHandler FileReadWriter

@@ -325,14 +325,14 @@ func (s *accessManagerSuite) TestAuthorize_ActionsOnParents() {
 
 	assert.Nil(s.T(), err)
 
-	// Ignore inhertiance cycle when permission is granted beforehand
+	// Ignore inheritance cycle when permission is granted beforehand
 	testGrandParentRole.Parents = []string{testRole.ID}
 
 	err = manager.Authorize(testRequest)
 
 	assert.Nil(s.T(), err)
 
-	// Detect inhertiance cycle when permission is not granted beforehand
+	// Detect inheritance cycle when permission is not granted beforehand
 	testRequest.Actions = []string{"NewAction"}
 
 	err = manager.Authorize(testRequest)

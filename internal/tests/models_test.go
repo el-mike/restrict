@@ -29,10 +29,10 @@ func (u *User) GetResourceName() string {
 type Conversation struct {
 	ID string
 
-	CreatedBy  string
-	UserIds    []string
-	Active     bool
-	MessageIds []string
+	CreatedBy    string
+	Participants []string
+	Active       bool
+	MessageIds   []string
 }
 
 // Resource interface implementation.
