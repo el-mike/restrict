@@ -195,7 +195,7 @@ Here is an example of AccessRequest:
 ```go
 // ... manager setup
 
-// Create empty interfaces or provide the correct entitites.
+// Create empty instances or provide the correct entitites.
 user := &User{}
 conversation := &Conversation{}
 
