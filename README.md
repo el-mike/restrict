@@ -379,7 +379,7 @@ But we could also define Conditions like so:
 	},
 }
 ```
-We have 3 different **Permissions** with the same name but different sets of Conditions, effectively making it an **OR** operation - just one set of the Conditions needs to be satisfy in order to grant permission for "delete" action.
+We have 3 different **Permissions** with the same name but different sets of Conditions, effectively making it an **OR** operation - just one set of the Conditions needs to be satisfied in order to grant permission for "delete" action.
 
 ### Custom Conditions
 You can add any number of Conditions to match requirements of your access policy. Condition needs to implement `Condition` interface:
