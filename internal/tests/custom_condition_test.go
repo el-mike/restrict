@@ -25,7 +25,7 @@ func (c *hasUserCondition) Check(request *restrict.AccessRequest) error {
 		return restrict.NewConditionNotSatisfiedError(c, request, fmt.Errorf("Resource has to be a Conversation"))
 	}
 
-	for _, userId := range conversation.UserIds {
+	for _, userId := range conversation.Participants {
 		if userId == user.ID {
 			return nil
 		}

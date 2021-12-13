@@ -67,10 +67,10 @@ func (s *integrationSuite) testPolicy(policyManager *restrict.PolicyManager) {
 	}
 
 	conversation := &Conversation{
-		ID:        "testConversation1",
-		CreatedBy: "otherUser1",
-		UserIds:   []string{},
-		Active:    true,
+		ID:           "testConversation1",
+		CreatedBy:    "otherUser1",
+		Participants: []string{},
+		Active:       true,
 	}
 
 	manager := restrict.NewAccessManager(policyManager)
@@ -86,7 +86,7 @@ func (s *integrationSuite) testPolicy(policyManager *restrict.PolicyManager) {
 	assert.IsType(s.T(), new(restrict.ConditionNotSatisfiedError), err.(*restrict.AccessDeniedError).Reason())
 
 	// "read" granted - User belongs to the Conversation.
-	conversation.UserIds = []string{s.testUserId}
+	conversation.Participants = []string{s.testUserId}
 
 	err = manager.Authorize(&restrict.AccessRequest{
 		Subject:  user,
