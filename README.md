@@ -394,7 +394,7 @@ err := manager.Authorize(&restrict.AccessRequest{
 })
 // err is nil - "user-one" belongs to conversation's Participants slice.
 ```
-Or you could want to allow to delete a `Conversation` only when it has less than 100 messages. In this case, you could create more generalized `Condition`, using `ValueDescriptor`:
+Or you could want to allow to delete a `Conversation` only when it has less than 100 messages. In this case, you could create more generalized `Condition`, using `ValueDescriptor`, and pass `Max` value via Context:
 ```go
 const greatherThanType = "GREATER_THAN"
 
@@ -461,7 +461,9 @@ err = manager.Authorize(&restrict.AccessRequest{
 })
 // err is nil - conversation has less than 100 messages.
 ```
+You could also provide `Max` value as explicit value (see [Value Descriptor](#value-descriptor) section) and set it in your PolicyDefinition.
 
+All of the checking logic is up to you - restrict only provides some building blocks and ensures that your Conditions will be used as specified in your policy.
 
 ## Development
 ### Prerequisites
