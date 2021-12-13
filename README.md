@@ -25,6 +25,7 @@ Restrict helps with building simple yet powerful access policies in declarative 
 * **Resource** - an entity that is a target of the actions. Needs to implement `Resource` interface and provide unique resource name. Resource can be implemented by any entity or object in your domain.
 * **Action** - an arbitrary operation that can be performed on given Resource.
 * **Context** - a map of values containing any additional data needed to validate the access rights.
+* **Condition** - requirement that needs to be satisfied in order to grant the access. There are couple of built-in Conditions, but any custom Condition can be added, as long as it implements `Condition` interface. Conditions are the way to express more granular control.
 
 Restrict uses those informations to determine whether an access can be granted.
 
