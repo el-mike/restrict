@@ -11,7 +11,7 @@ Restrict is a authorization library that provides a hybrid of RBAC and ABAC mode
 * [Concepts](#concepts)
 * [Basic usage](#basic-usage)
 * [Policy](#policy)
-* [Access Request] (#access-request)
+* [Access Request](#access-request)
 
 ## Installation
 To install the library, run:
