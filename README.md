@@ -239,30 +239,7 @@ Restrict ships with couple of built-in Conditions, but any number of custom Cond
 
 ### Built-in Conditions
 
-### Empty Condition
-`EmptyCondition` and `NotEmptyCondition` allow to check if value described by ValueDescriptor is empty (not defined) or not empty (defined).
-```go
-&restrict.Permission{
-	// An action that given Permission allows to perform.
-	Action: "delete",
-	// Optional Conditions that when defined, need to be satisfied in order
-	// to allow the access.
-	Conditions: restrict.Conditions{
-		&restrict.EmptyCondition{ // or &restrict.NotEmptyCondition
-			// Optional - helps with identifying failing Condition when checking an error
-			// returned from .Authorized method.
-			ID: "deleteActive",
-			// Value to be checked.
-			Value: &restrict.ValueDescriptor{
-				Source: restrict.ResourceField,
-				Field:  "Active",
-			},
-		},
-	},
-}
-```
-
-### Equal Condition
+#### Equal Condition
 `EqualCondition` and `NotEqualCondition` allow to check if two values, described by ValueDescriptors, are equal or not.
 ```go
 &restrict.Permission{
@@ -283,6 +260,29 @@ Restrict ships with couple of built-in Conditions, but any number of custom Cond
 		},
 	},
 },
+```
+
+#### Empty Condition
+`EmptyCondition` and `NotEmptyCondition` allow to check if value described by ValueDescriptor is empty (not defined) or not empty (defined).
+```go
+&restrict.Permission{
+	// An action that given Permission allows to perform.
+	Action: "delete",
+	// Optional Conditions that when defined, need to be satisfied in order
+	// to allow the access.
+	Conditions: restrict.Conditions{
+		&restrict.EmptyCondition{ // or &restrict.NotEmptyCondition
+			// Optional - helps with identifying failing Condition when checking an error
+			// returned from .Authorized method.
+			ID: "deleteActive",
+			// Value to be checked.
+			Value: &restrict.ValueDescriptor{
+				Source: restrict.ResourceField,
+				Field:  "Active",
+			},
+		},
+	},
+}
 ```
 
 ### Value Descriptor
