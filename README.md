@@ -12,6 +12,7 @@ Restrict is a authorization library that provides a hybrid of RBAC and ABAC mode
 * [Basic usage](#basic-usage)
 * [Policy](#policy)
 * [Access Request](#access-request)
+* [Access Manager](#access-manager)
 * [Conditions](#conditions)
 	* [Built-in Conditions](#built-in-conditions)
 		* [Empty Condition](#empty-condition)
@@ -19,6 +20,8 @@ Restrict is a authorization library that provides a hybrid of RBAC and ABAC mode
 	* [Value Descriptor](#value-descriptor)
 	* [Composition](#composition)
 	* [Custom Conditions](#custom-conditions)
+* [Presets](#presets)
+* [PolicyManager and persistence](#policymanager-and-persistence)
 
 ## Installation
 To install the library, run:
@@ -231,6 +234,30 @@ accessRequest := &restrict.AccessRequest{
 	Resource: restrict.UseResource("Conversation"),
 	Actions:  []string{"read", "create"},
 }
+```
+
+## Access Manager
+`AccessManager` is responsible for the actual validation. Once set up with proper `PolicyManager` instance, you can use its `Authorize` method in order to check given `AccessRequest`. `Authorize` returns an error if access is not granted, and `nil` otherwise (meaning there is no error and the access is granted).
+
+```go
+var policy = &restrict.PolicyDefinition{
+	// ... policy details
+}
+
+adapter := adapters.NewInMemoryAdapter(policy)
+policyMananger, err := restrict.NewPolicyManager(adapter, true)
+if err != nil {
+	log.Fatal(err)
+}
+
+manager := restrict.NewAccessManager(policyMananger)
+
+accessRequest := &restrict.AccessRequest{
+	// ... request details
+}
+
+// 
+err := manager.Authorize(accessRequest)
 ```
 
 ## Conditions
@@ -520,6 +547,12 @@ err = manager.Authorize(&restrict.AccessRequest{
 You could also provide `Max` value as explicit value (see [Value Descriptor](#value-descriptor) section) and set it in your PolicyDefinition.
 
 All of the checking logic is up to you - restrict only provides some building blocks and ensures that your Conditions will be used as specified in your policy.
+
+## Presets
+TBD
+
+## PolicyManager and persistence
+TBD
 
 ## Development
 ### Prerequisites
