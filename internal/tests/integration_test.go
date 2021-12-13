@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"fmt"
 	"log"
 	"testing"
 
@@ -26,6 +27,11 @@ func (s *integrationSuite) SetupSuite() {
 	//nolint
 	restrict.RegisterConditionFactory(hasUserConditionType, func() restrict.Condition {
 		return new(hasUserCondition)
+	})
+
+	//nolint
+	restrict.RegisterConditionFactory(greatherThanType, func() restrict.Condition {
+		return new(greaterThanCondition)
 	})
 }
 
@@ -105,6 +111,8 @@ func (s *integrationSuite) testPolicy(policyManager *restrict.PolicyManager) {
 		Actions:  []string{"update"},
 	})
 
+	fmt.Print(err)
+
 	assert.Nil(s.T(), err)
 
 	// "modify" is not granted.
@@ -131,6 +139,21 @@ func (s *integrationSuite) testPolicy(policyManager *restrict.PolicyManager) {
 
 	condition := conditionErr.(*restrict.ConditionNotSatisfiedError).FailedCondition().(*restrict.EmptyCondition)
 	assert.Equal(s.T(), "deleteActive", condition.ID)
+
+	// "delete" condition not satisfied - Conversation has to have less than 100 messages.
+	conversation.Active = false
+	conversation.MessagesCount = 110
+
+	err = manager.Authorize(&restrict.AccessRequest{
+		Subject:  user,
+		Resource: conversation,
+		Actions:  []string{"delete"},
+		Context: restrict.Context{
+			"Max": 100,
+		},
+	})
+
+	assert.IsType(s.T(), new(restrict.AccessDeniedError), err)
 
 	// User CAN read itself
 	err = manager.Authorize(&restrict.AccessRequest{

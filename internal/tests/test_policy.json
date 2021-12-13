@@ -145,6 +145,15 @@
 										"field": "Active"
 									}
 								}
+							},
+							{
+								"type": "GREATER_THAN",
+								"options": {
+									"value": {
+										"source": "ResourceField",
+										"field": "MessagesCount"
+									}
+								}
 							}
 						]
 					}

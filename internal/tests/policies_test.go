@@ -70,6 +70,12 @@ var PolicyOne = &restrict.PolicyDefinition{
 									Field:  "Active",
 								},
 							},
+							&greaterThanCondition{
+								Value: &restrict.ValueDescriptor{
+									Source: restrict.ResourceField,
+									Field:  "MessagesCount",
+								},
+							},
 						},
 					},
 				},
