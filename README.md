@@ -289,7 +289,7 @@ if accessError, ok := err.(*restrict.AccessDeniedError); ok {
 ```
 
 ## Conditions
-Conditions allows to define more specific access control. It's similar to ABAC model, where more than just associated role need to be validated in order to grant the access. For example, a Subject can only update the Resource if it was created by it. Such a requirement can be expressed in Restrict as a Condition. If the Condition is not satsfied, access will not be granted, even if Subject does have the required Role.
+Conditions allows to define more specific access control. It's similar to ABAC model, where more than just associated role needs to be validated in order to grant the access. For example, a Subject can only update the Resource if it was created by it. Such a requirement can be expressed with Restrict as a Condition. If the Condition is not satsfied, access will not be granted, even if Subject does have the required Role.
 
 Restrict ships with couple of built-in Conditions, but any number of custom Conditions can be added.
 
