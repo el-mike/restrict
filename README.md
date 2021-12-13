@@ -286,7 +286,7 @@ Restrict ships with couple of built-in Conditions, but any number of custom Cond
 ```
 
 ### Value Descriptor
-`ValueDescriptor` is an object describing the value that needs to be retrieved from `AccessRequest` and tested by given Condition. `ValueDescriptor` allows to chdeck various attributes without coupling your domain's entities to the library itself or forcing you to implement arbitrary interfaces. It uses reflection to get needed values.
+`ValueDescriptor` is an object describing the value that needs to be retrieved from `AccessRequest` and tested by given Condition. `ValueDescriptor` allows to check various attributes without coupling your domain's entities to the library itself or forcing you to implement arbitrary interfaces. It uses reflection to get needed values.
 
 `ValueDescriptor` needs to define value's source, which can be one of the predefined `ValueSource` enum type: `SubjectField`, `ResourceField`, `ContextField` or `Explicit`, and `Field` or `Value`, based on chosen source.
 ```go
