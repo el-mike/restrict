@@ -4,7 +4,7 @@
 ![License](https://img.shields.io/github/license/el-Mike/restrict)
 [![master](https://github.com/el-Mike/restrict/actions/workflows/master.yml/badge.svg)](https://github.com/el-Mike/restrict/actions/workflows/master.yml)
 
-Restrict is a authorization library that provides a hybrid of RBAC and ABAC models, allowing to define simple role-based policies while using more fine-grained control when needed.
+Restrict is an authorization library that provides a hybrid of RBAC and ABAC models, allowing to define simple role-based policies while using more fine-grained control when needed.
 
 ## Table of contents
 * [Installation](#installation)
@@ -22,7 +22,9 @@ Restrict is a authorization library that provides a hybrid of RBAC and ABAC mode
 	* [Custom Conditions](#custom-conditions)
 * [Presets](#presets)
 * [PolicyManager and persistence](#policymanager-and-persistence)
-	* [Adapters](#adapters)
+	* [Storage adapter](#storage-adapter)
+	* [Built-in Adapters](#built-in-adapters)
+	* [Policy management](#policy-management)
 
 ## Installation
 To install the library, run:
@@ -652,10 +654,75 @@ var policy = &restrict.PolicyDefinition{
 Now we can reuse the same Conditions for different actions. 
 
 ## PolicyManager and persistence
-TBD
+`PolicyManager` provides thread-safe, runtime policy management, that allows to easily retrieve and manipulate your policy. It is used by `AccessManager` to retrieve Permissions for given role when checking `AccessRequest`. You can create `PolicyManager` like so:
+```go
+myStorageAdapter := // ... create adapter 
 
-### Adapters
-TBD
+// Second argument let's you set auto-update feature. If set to true,
+// any change made via PolicyManager will be automatically saved with StorageAdapter.
+// You can later disable/enable auto-update with DisableAutoUpdate() and EnableAutoUpdate() methods.
+policyManager, err := restrict.NewPolicyManager(myStorageAdapter, true)
+```
+
+### Storage adapter
+`PolicyManager` relies on `StorageAdapter` instance, which is an entity providing perstistence logic for PolicyDefinition. Restrict ships with two built-in, ready to go StorageAdapters, but you can easily provide your own, by implementing following interface:
+```go
+type StorageAdapter interface {
+	// LoadPolicy - loads and returns PolicyDefinition from underlying
+	// storage provider.
+	LoadPolicy() (*PolicyDefinition, error)
+
+	// SavePolicy - saves PolicyDefinition in underlying storage provider.
+	SavePolicy(policy *PolicyDefinition) error
+}
+```
+
+All of the Restrict's models are JSON and YAML compliant, so you can marshal/unmarshal PolicyDefinition in those formats.
+
+### Built-in Adapters
+
+#### InMemoryAdapter
+Simple, in-memory storage for PolicyDefinition. You can create and use it like so:
+```go
+inMemoryAdapter := adapters.NewInMemoryAdapter(policy)
+
+policyManager, err := restrict.NewPolicyManager(inMemoryAdapter, true)
+```
+`InMemoryAdapter` will keep PolicyDefinition object directly in memory. Using `InMemoryAdapter`, you will propably keep your PolicyDefinition in .go files. Please note that when using `InMemoryAdapter`, calling `inMemoryAdapter.SavePolicy(policy)` does NOT save it permanently, therefore any changes you've made with `PolicyManager` will be lost once program exits.
+
+#### FileAdapter
+`FileAdapter` uses file system to persit the PolicyDefinition. You can use JSON or YAML files. Here is how to use it:
+```go
+fileAdapter := adapters.NewFileAdapter("filename.json", adapters.JSONFile)
+// alternatively, to use YAML file:
+fileAdapter := adapters.NewFileAdapter("filename.yml", adapters.YAMLFile)
+
+policyManager, err := restrict.NewPolicyManager(fileAdapter, true)
+```
+`FileAdapter` will load the PolicyDefinition from given file, and keep it in sync with any changes when calling `fileAdapter.SavePolicy(policy)`. You can also easily trasform your in-memory PolicyDefinition into JSON/YAML one, like so:
+```go
+policy := &restrict.PolicyDefinition{
+	// ... policy details
+}
+
+// assuming "filename.json" file does not exist or is empty
+fileAdapter := adapters.NewFileAdapter("filename.json", adapters.JSONFile)
+
+err := fileAdapter.SavePolicy(policy)
+if err != nil {
+	// ... error handling
+}
+```
+Please refer to:
+* [JSON policy](https://github.com/el-Mike/restrict/blob/master/internal/examples/policy_example.json)
+* [YAML policy](https://github.com/el-Mike/restrict/blob/master/internal/examples/policy_example.yaml)
+
+To see examples of JSON/YAML policies.
+
+### Policy management
+`PolicyManager` provides a set of methods that will help you manage your policy in a dynamic way. You can manipulate it in runtime, or create custom tools in order to add and remove Roles, grant and revoke Permissions or manage presets. Full list of `PolicyManager`'s methods can be found here:
+
+[PolicyManager docs](https://pkg.go.dev/github.com/el-Mike/restrict#PolicyManager)
 
 ## Development
 ### Prerequisites
