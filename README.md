@@ -31,6 +31,7 @@ To install the library, run:
 ```
 go get github.com/el-Mike/restrict
 ```
+**Go version 1.15+ is required!**  
 Restrict follows [semantic versioning](https://semver.org/), so any changes will be applied according to its principles.
 
 ## Concepts
