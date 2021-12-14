@@ -1,0 +1,69 @@
+{
+	"permissionPresets": {
+		"updateOwn": {
+			"action": "update",
+			"conditions": [
+				{
+					"type": "EQUAL",
+					"options": {
+						"name": "isOwner",
+						"left": {
+							"source": "ResourceField",
+							"field": "CreatedBy"
+						},
+						"right": {
+							"source": "SubjectField",
+							"field": "ID"
+						}
+					}
+				}
+			]
+		}
+	},
+	"roles": {
+		"Admin": {
+			"description": "This is an Admin role, with permissions to manage Users.",
+			"grants": {
+				"User": [
+					{
+						"action": "create"
+					}
+				]
+			},
+			"parents": [
+				"User"
+			]
+		},
+		"User": {
+			"description": "This is a simple User role, with permissions for basic chat operations.",
+			"grants": {
+				"Conversation": [
+					{
+						"action": "read"
+					},
+					{
+						"action": "create"
+					},
+					{
+						"preset": "updateOwn"
+					},
+					{
+						"action": "delete",
+						"conditions": [
+							{
+								"type": "EMPTY",
+								"options": {
+									"name": "deleteActive",
+									"value": {
+										"source": "ResourceField",
+										"field": "Active"
+									}
+								}
+							}
+						]
+					}
+				]
+			}
+		}
+	}
+}
