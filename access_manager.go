@@ -96,9 +96,9 @@ func (am *AccessManager) authorize(request *AccessRequest, roleName, resourceNam
 		if validationError != nil {
 			if am.isAccessError(validationError) {
 				return newAccessDeniedError(request, action, validationError)
-			} else {
-				return validationError
 			}
+
+			return validationError
 		}
 	}
 
