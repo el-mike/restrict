@@ -206,7 +206,7 @@ func (pm *PolicyManager) DeleteRole(roleID string) error {
 	return nil
 }
 
-// AddPermission - adds a new Permission for the Role and Resource with passed IDs.
+// AddPermission - adds a new Permission for the Role and Resource with passed ids.
 // Saves with StorageAdapter if autoUpdate is set to true.
 func (pm *PolicyManager) AddPermission(roleID, resourceID string, permission *Permission) error {
 	pm.Lock()
@@ -237,7 +237,8 @@ func (pm *PolicyManager) AddPermission(roleID, resourceID string, permission *Pe
 }
 
 // DeletePermission - removes a Permission with given name for Role and Resource with
-// passed IDs.
+// passed ids. Please note that deleting a Permission for given action will revoke
+// ALL of the Permissions that share this action.
 // Saves with StorageAdapter if autoUpdate is set to true.
 func (pm *PolicyManager) DeletePermission(roleID, resourceID, action string) error {
 	pm.Lock()
