@@ -455,7 +455,9 @@ type Condition interface {
 }
 
 ```
-For example, sticking to previous examples with `User` and `Conversation`, we can consider a case where we want to allow the `User` to read a `Conversation` only if it participates in it. Such a Condition could look like this:
+Please note that if you want to get `AccessDeniedError` from `Authorize` method when your custom Condition is not satisfied, you should return `ConditionNotSatisfiedError` - any other error will be treated like internal error and will be returned directly. You can use `NewConditionNotSatisfiedError` to create a new instance if it.
+
+Sticking to previous examples with `User` and `Conversation`, we can consider a case where we want to allow the `User` to read a `Conversation` only if it participates in it. Such a Condition could look like this:
 ```go
 // Type is spelled with upper case - it's not necessary, but built-in Conditions
 // follow this convention, to make a distinction between Condition type and other
