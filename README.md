@@ -31,6 +31,7 @@ To install the library, run:
 ```
 go get github.com/el-Mike/restrict
 ```
+Restrict follows [semantic versioning](https://semver.org/), so any changes will be applied according to its principles.
 
 ## Concepts
 Restrict helps with building simple yet powerful access policies in declarative way. In order to do that, we introduce following concepts:
