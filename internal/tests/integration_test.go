@@ -137,7 +137,7 @@ func (s *integrationSuite) testPolicy(policyManager *restrict.PolicyManager) {
 	conditionErr := err.(*restrict.AccessDeniedError).Reason()
 	assert.IsType(s.T(), new(restrict.ConditionNotSatisfiedError), conditionErr)
 
-	condition := conditionErr.(*restrict.ConditionNotSatisfiedError).FailedCondition().(*restrict.EmptyCondition)
+	condition := err.(*restrict.AccessDeniedError).FailedCondition().(*restrict.EmptyCondition)
 	assert.Equal(s.T(), "deleteActive", condition.ID)
 
 	// "delete" condition not satisfied - Conversation has to have less than 100 messages.
