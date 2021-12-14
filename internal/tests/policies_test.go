@@ -1,6 +1,6 @@
 package tests
 
-import "github.com/el-Mike/restrict"
+import "github.com/el-mike/restrict"
 
 var PolicyOne = &restrict.PolicyDefinition{
 	PermissionPresets: restrict.PermissionPresets{

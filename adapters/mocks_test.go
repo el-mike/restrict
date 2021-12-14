@@ -3,7 +3,7 @@ package adapters
 import (
 	"fmt"
 
-	"github.com/el-Mike/restrict"
+	"github.com/el-mike/restrict"
 )
 
 const (

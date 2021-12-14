@@ -5,8 +5,8 @@ import (
 	"log"
 	"testing"
 
-	"github.com/el-Mike/restrict"
-	"github.com/el-Mike/restrict/adapters"
+	"github.com/el-mike/restrict"
+	"github.com/el-mike/restrict/adapters"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )

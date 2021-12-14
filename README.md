@@ -1,8 +1,8 @@
 # restrict
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/el-Mike/gochat)](https://goreportcard.com/report/github.com/el-Mike/restrict)
-![License](https://img.shields.io/github/license/el-Mike/restrict)
-[![master](https://github.com/el-Mike/restrict/actions/workflows/master.yml/badge.svg)](https://github.com/el-Mike/restrict/actions/workflows/master.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/el-mike/gochat)](https://goreportcard.com/report/github.com/el-mike/restrict)
+![License](https://img.shields.io/github/license/el-mike/restrict)
+[![master](https://github.com/el-mike/restrict/actions/workflows/master.yml/badge.svg)](https://github.com/el-mike/restrict/actions/workflows/master.yml)
 
 Restrict is an authorization library that provides a hybrid of RBAC and ABAC models, allowing to define simple role-based policies while using more fine-grained control when needed.
 
@@ -716,15 +716,15 @@ if err != nil {
 }
 ```
 Please refer to:
-* [JSON policy](https://github.com/el-Mike/restrict/blob/master/internal/examples/policy_example.json)
-* [YAML policy](https://github.com/el-Mike/restrict/blob/master/internal/examples/policy_example.yaml)
+* [JSON policy](https://github.com/el-mike/restrict/blob/master/internal/examples/policy_example.json)
+* [YAML policy](https://github.com/el-mike/restrict/blob/master/internal/examples/policy_example.yaml)
 
 To see examples of JSON/YAML policies.
 
 ### Policy management
 `PolicyManager` provides a set of methods that will help you manage your policy in a dynamic way. You can manipulate it in runtime, or create custom tools in order to add and remove Roles, grant and revoke Permissions or manage presets. Full list of `PolicyManager`'s methods can be found here:
 
-[PolicyManager docs](https://pkg.go.dev/github.com/el-Mike/restrict#PolicyManager)
+[PolicyManager docs](https://pkg.go.dev/github.com/el-mike/restrict#PolicyManager)
 
 ## Development
 ### Prerequisites

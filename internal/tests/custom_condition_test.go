@@ -3,7 +3,7 @@ package tests
 import (
 	"fmt"
 
-	"github.com/el-Mike/restrict"
+	"github.com/el-mike/restrict"
 )
 
 const hasUserConditionType = "BELONGS_TO"

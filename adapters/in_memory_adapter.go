@@ -1,6 +1,6 @@
 package adapters
 
-import "github.com/el-Mike/restrict"
+import "github.com/el-mike/restrict"
 
 // InMemoryAdapter - StorageAdapter implementation, providing in-memory persistence.
 type InMemoryAdapter struct {

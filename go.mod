@@ -1,4 +1,4 @@
-module github.com/el-Mike/restrict
+module github.com/el-mike/restrict
 
 go 1.15
 

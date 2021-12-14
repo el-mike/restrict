@@ -1,7 +1,7 @@
 package adapters
 
 import (
-	"github.com/el-Mike/restrict"
+	"github.com/el-mike/restrict"
 )
 
 // AllowedFileType - alias type for describing allowed file types.
