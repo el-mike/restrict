@@ -270,6 +270,59 @@ func (s *accessManagerSuite) TestAuthorize_ActionsWithConditions() {
 	assert.Nil(s.T(), err)
 }
 
+func (s *accessManagerSuite) TestAuthorize_UnknownConditionError() {
+	testConditionedAction := "conditioned-action"
+	testRole := getBasicRole()
+
+	testParentRole := getBasicParentRole()
+
+	testRole.Parents = []string{testParentRole.ID}
+
+	testPolicyProvider := new(policyProviderMock)
+	testPolicyProvider.On("GetRole", basicRoleName).Return(testRole, nil)
+	testPolicyProvider.On("GetRole", basicParentRoleName).Return(testParentRole, nil)
+
+	// Failing Condition
+	testFailingCondition := new(conditionMock)
+	testConditionError := errors.New("Custom error")
+
+	testFailingCondition.On("Check", mock.Anything).Return(testConditionError)
+
+	testConditionedPermission := &Permission{
+		Action:     testConditionedAction,
+		Conditions: Conditions{testFailingCondition},
+	}
+
+	testRole.Grants[basicResourceOneName] = append(testRole.Grants[basicResourceOneName], testConditionedPermission)
+
+	manager := NewAccessManager(testPolicyProvider)
+
+	testSubject := new(subjectMock)
+	testResource := new(resourceMock)
+
+	testSubject.On("GetRole").Return(basicRoleName)
+	testResource.On("GetResourceName").Return(basicResourceOneName)
+
+	testRequest := &AccessRequest{
+		Subject:  testSubject,
+		Resource: testResource,
+		Actions:  []string{testConditionedAction},
+	}
+
+	err := manager.Authorize(testRequest)
+
+	assert.Equal(s.T(), testConditionError, err)
+
+	// Unknown error on parents
+	testRole.Grants[basicResourceOneName] = Permissions{}
+
+	testParentRole.Grants[basicResourceOneName] = append(testParentRole.Grants[basicResourceOneName], testConditionedPermission)
+
+	err = manager.Authorize(testRequest)
+
+	assert.Equal(s.T(), testConditionError, err)
+}
+
 func (s *accessManagerSuite) TestAuthorize_ActionsOnParents() {
 	testRole := getBasicRole()
 	testParentRole := getBasicParentRole()

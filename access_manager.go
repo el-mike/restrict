@@ -56,11 +56,11 @@ func (am *AccessManager) authorize(request *AccessRequest, roleName, resourceNam
 			return newRequestMalformedError(request, fmt.Errorf("Action cannot be empty"))
 		}
 
-		authorizeError := am.validateAction(grants, action, request)
+		validationError := am.validateAction(grants, action, request)
 
 		// If access is not granted for given action on current Role, check if
 		// any parent Role can satisfy the request.
-		if authorizeError != nil && len(parents) > 0 {
+		if validationError != nil && len(parents) > 0 {
 			checkedRoles = append(checkedRoles, roleName)
 
 			for _, parent := range parents {
@@ -87,14 +87,18 @@ func (am *AccessManager) authorize(request *AccessRequest, roleName, resourceNam
 				} else {
 					// If .authorize call with parent Role has returned nil,
 					// that means the request is satisfied.
-					authorizeError = nil
+					validationError = nil
 				}
 			}
 		}
 
 		// If request has not been granted, abort the loop and return an error.
-		if authorizeError != nil {
-			return newAccessDeniedError(request, action, authorizeError)
+		if validationError != nil {
+			if am.isAccessError(validationError) {
+				return newAccessDeniedError(request, action, validationError)
+			} else {
+				return validationError
+			}
 		}
 	}
 
