@@ -576,7 +576,80 @@ You could also provide `Max` value as explicit value (see [Value Descriptor](#va
 All of the checking logic is up to you - restrict only provides some building blocks and ensures that your Conditions will be used as specified in your policy.
 
 ## Presets
-TBD
+Preset is simply a Permission with unique name, that you can reuse across your PolicyDefinition. The main reason behind introducing presets is saving the necessity of defining the same Conditions for different Permissions, as in many cases the same action will have identical Conditions for various Resources.
+
+Let's consider following example:
+```go
+var policy = &restrict.PolicyDefinition{
+	Roles: restrict.Roles{
+		"User": {
+			Grants: restrict.GrantsMap{
+				"Conversation": {
+					&restrict.Permission{Preset: "updateOwn"},
+				},
+				"Message": {
+					&restrict.Permission{Preset: "updateOwn"},
+				}
+			},
+		},
+	},
+	PermissionPresets: restrict.PermissionPresets{
+		"updateOwn": &restrict.Permission{
+			Action: "update",
+			Conditions: restrict.Conditions{
+				&restrict.EqualCondition{
+					// ... condition details
+				},
+			},
+		},
+	},
+}
+```
+In this case, we can express that `User` can update only its own `Conversation` or `Message`, without the need for repeating Conditions definition.
+
+But what in case we need the same Conditions, but for different actions? We can just define an action name of Permission itself, along the preset:
+```go
+var policy = &restrict.PolicyDefinition{
+	Roles: restrict.Roles{
+		"User": {
+			Grants: restrict.GrantsMap{
+				"Conversation": {
+					&restrict.Permission{
+						Action: "update",
+						Preset: "accessOwn",
+					},
+					&restrict.Permission{
+						Action: "delete",
+						Preset: "accessOwn",
+					},
+				},
+				"Message": {
+					&restrict.Permission{
+						Action: "update",
+						Preset: "accessOwn",
+					},
+					&restrict.Permission{
+						Action: "delete",
+						Preset: "accessOwn",
+					},
+				},
+			},
+		},
+	},
+	PermissionPresets: restrict.PermissionPresets{
+		// Note that this preset does not have an Action anymore,
+		// but it can - Permission's Action just overrides preset's Action.
+		"accessOwn": &restrict.Permission{
+			Conditions: restrict.Conditions{
+				&restrict.EqualCondition{
+					// ... condition details
+				},
+			},
+		},
+	},
+}
+```
+Now we can reuse the same Conditions for different actions. 
 
 ## PolicyManager and persistence
 TBD
