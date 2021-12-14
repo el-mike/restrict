@@ -27,6 +27,8 @@ Restrict is an authorization library that provides a hybrid of RBAC and ABAC mod
 	* [Storage adapter](#storage-adapter)
 	* [Built-in Adapters](#built-in-adapters)
 	* [Policy management](#policy-management)
+* [Examples](#examples)
+	* [Middleware function](#middleware-function)
 * [Roadmap](#roadmap)
 
 ## Installation
@@ -730,6 +732,57 @@ To see examples of JSON/YAML policies.
 `PolicyManager` provides a set of methods that will help you manage your policy in a dynamic way. You can manipulate it in runtime, or create custom tools in order to add and remove Roles, grant and revoke Permissions or manage presets. Full list of `PolicyManager`'s methods can be found here:
 
 [PolicyManager docs](https://pkg.go.dev/github.com/el-mike/restrict#PolicyManager)
+
+## Examples
+
+### Middleware function
+You can easily use Restrict as a middleware function in your backend application. Here is an example of using Restrict inside Gin framework's handler function:
+```go
+func WithAuth(
+	actions []string,
+	resource restrict.Resource,
+) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		user, err := authenticateUser(c)
+		if err != nil {
+			c.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+
+		c.Set(UserContextKey, user)
+
+		// If any previous handler fetched concrete Resource, we want to
+		// override it here, so we can test it against Conditions if necessary.
+		if contextResource, ok := c.Get(ResourceContextKey); ok {
+			if res, ok := contextResource.(restrict.Resource); ok {
+				resource = res
+			}
+		}
+
+		err = accessManager.Authorize(&restrict.AccessRequest{
+			Subject:  user,
+			Resource: resource,
+			Actions:  actions,
+		})
+
+		// If error is related to insufficient privileges, we want to
+		// return appropriate response.
+		if accessError, ok := err.(*restrict.AccessDeniedError); ok {
+			log.Print(accessError)
+
+			c.AbortWithError(http.StatusForbidden, accessError)
+			return
+		}
+
+		// If not, some other error occurred.
+		if err != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+	}
+}
+```
+You can see entire working example **[HERE](https://github.com/el-mike/restrict-middleware-example)**
 
 ## Roadmap
 Check this [Project](https://github.com/el-mike/restrict/projects/3) for upcoming features.
