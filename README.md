@@ -27,6 +27,7 @@ Restrict is an authorization library that provides a hybrid of RBAC and ABAC mod
 	* [Storage adapter](#storage-adapter)
 	* [Built-in Adapters](#built-in-adapters)
 	* [Policy management](#policy-management)
+* [Roadmap](#roadmap)
 
 ## Installation
 To install the library, run:
@@ -729,6 +730,9 @@ To see examples of JSON/YAML policies.
 `PolicyManager` provides a set of methods that will help you manage your policy in a dynamic way. You can manipulate it in runtime, or create custom tools in order to add and remove Roles, grant and revoke Permissions or manage presets. Full list of `PolicyManager`'s methods can be found here:
 
 [PolicyManager docs](https://pkg.go.dev/github.com/el-mike/restrict#PolicyManager)
+
+## Roadmap
+Check this [Project](https://github.com/el-mike/restrict/projects/3) for upcoming features.
 
 ## Development
 ### Prerequisites
