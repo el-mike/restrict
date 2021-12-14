@@ -104,37 +104,6 @@ Policy is the description of access rules that should be enforced in given syste
 
 ```go
 var policy = &restrict.PolicyDefinition{
-	// A map of reusable Permissions. Key corresponds to a preset's name, which can
-	// be later used to apply it.
-	PermissionPresets: restrict.PermissionPresets{
-		"updateOwn": &restrict.Permission{
-			// An action that given Permission allows to perform.
-			Action: "update",
-			// Optional Conditions that when defined, need to be satisfied in order
-			// to allow the access.
-			Conditions: restrict.Conditions{
-				// EqualCondition requires two values (described by ValueDescriptors)
-				// to be equal in order to grant the access.
-				// In this example we want to check if Conversation.CreatedBy and User.ID
-				// are the same, meaning that Conversation was created by given User.
-				&restrict.EqualCondition{
-					// Optional ID helpful when we need to identify the exact Condition that failed
-					// when checking the access.
-					ID: "isOwner",
-					// First value to compare.
-					Left: &restrict.ValueDescriptor{
-						Source: restrict.ResourceField,
-						Field:  "CreatedBy",
-					},
-					// Second value to compare.
-					Right: &restrict.ValueDescriptor{
-						Source: restrict.SubjectField,
-						Field:  "ID",
-					},
-				},
-			},
-		},
-	},
 	// A map of Roles. Key corresponds to a Role that Subjects in your system can belong to.
 	Roles: restrict.Roles{
 		"User": {
@@ -149,7 +118,7 @@ var policy = &restrict.PolicyDefinition{
 					// Subject "User" can "create" a "Conversation".
 					&restrict.Permission{Action: "create"},
 					// Subject "User" can "update" ONLY a "Coversation" that was
-					// created by it. Check "updateOwn" preset definition above.
+					// created by it. Check "updateOwn" preset definition below.
 					&restrict.Permission{Preset: "updateOwn"},
 					// Subject "User" can "delete" ONLY inactive "Conversation".
 					&restrict.Permission{
@@ -182,6 +151,36 @@ var policy = &restrict.PolicyDefinition{
 				"User": {
 					// Subject "Admin" can create a "User".
 					&restrict.Permission{Action: "create"},
+				},
+			},
+		},
+	},
+	// A map of reusable Permissions. Key corresponds is a preset's name.
+	PermissionPresets: restrict.PermissionPresets{
+		"updateOwn": &restrict.Permission{
+			// An action that given Permission allows to perform.
+			Action: "update",
+			// Optional Conditions that when defined, need to be satisfied in order
+			// to allow the access.
+			Conditions: restrict.Conditions{
+				// EqualCondition requires two values (described by ValueDescriptors)
+				// to be equal in order to grant the access.
+				// In this example we want to check if Conversation.CreatedBy and User.ID
+				// are the same, meaning that Conversation was created by given User.
+				&restrict.EqualCondition{
+					// Optional ID helpful when we need to identify the exact Condition that failed
+					// when checking the access.
+					ID: "isOwner",
+					// First value to compare.
+					Left: &restrict.ValueDescriptor{
+						Source: restrict.ResourceField,
+						Field:  "CreatedBy",
+					},
+					// Second value to compare.
+					Right: &restrict.ValueDescriptor{
+						Source: restrict.SubjectField,
+						Field:  "ID",
+					},
 				},
 			},
 		},
