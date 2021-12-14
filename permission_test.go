@@ -51,7 +51,6 @@ func (s *permissionSuite) TestMergePreset() {
 
 	// Extend conditions
 	testPermission = &Permission{
-		ExtendPresetConditions: true,
 		Conditions: Conditions{
 			testCondition,
 		},
@@ -60,4 +59,29 @@ func (s *permissionSuite) TestMergePreset() {
 	testPermission.mergePreset(testPreset)
 
 	assert.Equal(s.T(), 3, len(testPermission.Conditions))
+
+	// Should not override Permission's own action.
+	customAction := "customAction"
+	testPermission = &Permission{
+		Action: customAction,
+	}
+
+	testPermission.mergePreset(testPreset)
+
+	assert.Equal(s.T(), customAction, testPermission.Action)
+}
+
+func (s *permissionSuite) TestMergePreset_NilPresetConditions() {
+	testPreset := &Permission{
+		Action: s.testAction,
+	}
+
+	testPermission := &Permission{}
+
+	assert.NotPanics(s.T(), func() {
+		testPermission.mergePreset(nil)
+	})
+
+	testPermission.mergePreset(testPreset)
+	assert.Equal(s.T(), 0, len(testPermission.Conditions))
 }

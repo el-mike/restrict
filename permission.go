@@ -10,9 +10,6 @@ type Permission struct {
 	Conditions Conditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
 	// Preset allows to extend Permission defined in PolicyDefinition.
 	Preset string `json:"preset,omitempty" yaml:"preset,omitempty"`
-	// ExtendPresetConditions specifies if preset's Conditions should be extended with
-	// Permission's own Conditions, or should they be overridden.
-	ExtendPresetConditions bool `json:"extendPresetConditions,omitempty" yaml:"extendPresetConditions,omitempty"`
 }
 
 // Permissions - alias type for slice of Permissions.
@@ -29,13 +26,9 @@ func (p *Permission) mergePreset(preset *Permission) {
 		p.Action = preset.Action
 	}
 
-	// If given Permission should extend preset's Conditions, we merge both
-	// Condition maps. Otherwise, we just reassign it.
-	if p.ExtendPresetConditions {
-		p.Conditions = append(p.Conditions, preset.Conditions...)
-	} else {
-		p.Conditions = preset.Conditions
-	}
+	// If Permission have its own Conditions, they will be merged
+	// together with the ones from the preset.
+	p.Conditions = append(p.Conditions, preset.Conditions...)
 
 	// We set Preset value to zero, to prevent subsequent merges while updating
 	// policies.
