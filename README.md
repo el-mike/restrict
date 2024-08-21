@@ -787,13 +787,12 @@ You can see entire working example **[HERE](https://github.com/el-mike/restrict-
 ## Roadmap
 Check this [Project](https://github.com/el-mike/restrict/projects/3) for upcoming features.
 
-## Development
+## Contributing
 ### Prerequisites
 
 1. Install [golangci-lint](https://golangci-lint.run/usage/install/)
 2. Set your IDE to use golangci-lint ([instructions](https://golangci-lint.run/usage/integrations/))
-3. Install [python3](https://www.python.org/download/releases/3.0/)
-4. Run `git config core.hooksPath .githooks` to wire up project's git hooks
+3. Run `git config core.hooksPath .githooks` to wire up project's git hooks
 
 ### Conventions
 
@@ -801,4 +800,3 @@ This repository follows [ConventionalCommits](https://www.conventionalcommits.or
 * `feature/<task-description>`
 * `bugfix/<task-description>`
 * `chore/<task-description>`
-

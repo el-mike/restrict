@@ -125,7 +125,7 @@ func (am *AccessManager) validateAction(permissions []*Permission, action string
 
 	for _, permission := range permissions {
 		if permission.Action == action {
-			if permission.Conditions == nil || len(permission.Conditions) == 0 || request.SkipConditions {
+			if len(permission.Conditions) == 0 || request.SkipConditions {
 				return nil
 			}
 
