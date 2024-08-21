@@ -1,7 +1,38 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 COMMIT_MSG_FILENAME=$1
-# git hooks are executed from project's root, therefore
-# we need to set up the path properly.
-python3 $PWD/.githooks/scripts/validate_msg.py $COMMIT_MSG_FILENAME
 
+MESSAGE_PREFIXES=("feat" "fix" "chore")
+MESSAGE_PREFIX_SEPARATOR=":"
+
+message="$(cat $COMMIT_MSG_FILENAME)"
+
+if [[ $message =~ [A-Z] ]]; then
+  printf "Message should be lowercase!\n"
+  exit 1
+fi
+
+# Note that IFS will only be set to ':' for read command.
+IFS=':' read -r -a parts <<< "$message"
+
+if [ ${#parts[@]} != 2 ]; then
+  printf "Incorrect format! Message should be formatted as follows:\n"
+  printf "<type>: <subject>\n"
+  exit 1
+fi
+
+prefix=${parts[0]}
+
+prefix_found=0
+
+for current_prefix in ${MESSAGE_PREFIXES[@]}; do
+  if [ "$prefix" == "$current_prefix" ]; then
+    prefix_found=1
+  fi
+done
+
+if [ $prefix_found == 0 ]; then
+  printf "Message prefix \"$prefix\" is incorrect!\n"
+  printf "Possible prefixes are: ${MESSAGE_PREFIXES[0]}, ${MESSAGE_PREFIXES[1]}, ${MESSAGE_PREFIXES[2]}\n"
+  exit 1
+fi
