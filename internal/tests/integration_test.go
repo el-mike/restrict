@@ -68,8 +68,8 @@ func (s *integrationSuite) TestRestrict() {
 
 func (s *integrationSuite) testPolicy(policyManager *restrict.PolicyManager) {
 	user := &User{
-		ID:   s.testUserId,
-		Role: UserRole,
+		ID:    s.testUserId,
+		Roles: []string{UserRole},
 	}
 
 	conversation := &Conversation{
@@ -87,9 +87,11 @@ func (s *integrationSuite) testPolicy(policyManager *restrict.PolicyManager) {
 		Resource: conversation,
 		Actions:  []string{"read"},
 	})
+	permissionErr := err.(*restrict.AccessDeniedError).Errors.First()
 
 	assert.IsType(s.T(), new(restrict.AccessDeniedError), err)
-	assert.IsType(s.T(), new(restrict.ConditionNotSatisfiedError), err.(*restrict.AccessDeniedError).Reason())
+	assert.IsType(s.T(), new(restrict.PermissionError), permissionErr)
+	assert.IsType(s.T(), new(restrict.ConditionNotSatisfiedError), permissionErr.ConditionError)
 
 	// "read" granted - User belongs to the Conversation.
 	conversation.Participants = []string{s.testUserId}
@@ -123,21 +125,22 @@ func (s *integrationSuite) testPolicy(policyManager *restrict.PolicyManager) {
 	})
 
 	assert.IsType(s.T(), new(restrict.AccessDeniedError), err)
-	assert.IsType(s.T(), new(restrict.PermissionNotGrantedError), err.(*restrict.AccessDeniedError).Reason())
+	assert.IsType(s.T(), new(restrict.PermissionError), err.(*restrict.AccessDeniedError).Errors.First())
 
-	// "delete" condition not satisfied - Conversation must be unactive.
+	// "delete" condition not satisfied - Conversation must be inactive.
 	err = manager.Authorize(&restrict.AccessRequest{
 		Subject:  user,
 		Resource: conversation,
 		Actions:  []string{"delete"},
 	})
+	permissionErr = err.(*restrict.AccessDeniedError).Errors.First()
 
 	assert.IsType(s.T(), new(restrict.AccessDeniedError), err)
 
-	conditionErr := err.(*restrict.AccessDeniedError).Reason()
+	conditionErr := permissionErr.ConditionError
 	assert.IsType(s.T(), new(restrict.ConditionNotSatisfiedError), conditionErr)
 
-	condition := err.(*restrict.AccessDeniedError).FailedCondition().(*restrict.EmptyCondition)
+	condition := permissionErr.FailedCondition().(*restrict.EmptyCondition)
 	assert.Equal(s.T(), "deleteActive", condition.ID)
 
 	// "delete" condition not satisfied - Conversation has to have less than 100 messages.
@@ -175,8 +178,8 @@ func (s *integrationSuite) testPolicy(policyManager *restrict.PolicyManager) {
 
 	// Admin CAN create other users
 	admin := &User{
-		ID:   "admin1",
-		Role: AdminRole,
+		ID:    "admin1",
+		Roles: []string{AdminRole},
 	}
 
 	err = manager.Authorize(&restrict.AccessRequest{
@@ -187,7 +190,7 @@ func (s *integrationSuite) testPolicy(policyManager *restrict.PolicyManager) {
 
 	assert.Nil(s.T(), err)
 
-	// Admin CAN create Converation because inherits from User.
+	// Admin CAN create Conversation because inherits from User.
 	err = manager.Authorize(&restrict.AccessRequest{
 		Subject:  admin,
 		Resource: &Conversation{},
@@ -196,7 +199,7 @@ func (s *integrationSuite) testPolicy(policyManager *restrict.PolicyManager) {
 
 	assert.Nil(s.T(), err)
 
-	// Admin CAN read any Converation, because it has unconditional read permission
+	// Admin CAN read any Conversation, because it has unconditional read permission
 	// (along with conditional one inherited from User).
 	err = manager.Authorize(&restrict.AccessRequest{
 		Subject:  admin,

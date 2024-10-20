@@ -75,7 +75,7 @@ func (s *accessManagerSuite) TestAuthorize_MalformedRequest() {
 
 func (s *accessManagerSuite) TestAuthorize_MalformedSubjectOrResource() {
 	testPolicyProvider := new(policyProviderMock)
-	testPolicyProvider.On("GetRole", mock.Anything).Return(getBasicRole(), nil)
+	testPolicyProvider.On("GetRole", mock.Anything).Return(getBasicRoleOne(), nil)
 
 	manager := NewAccessManager(testPolicyProvider)
 
@@ -83,7 +83,7 @@ func (s *accessManagerSuite) TestAuthorize_MalformedSubjectOrResource() {
 	testResource := new(resourceMock)
 
 	// Failing Subject, working Resource.
-	testSubject.On("GetRole").Return("").Once()
+	testSubject.On("GetRoles").Return([]string{}).Once()
 	testResource.On("GetResourceName").Return(basicResourceOneName).Once()
 
 	testRequest := &AccessRequest{
@@ -95,11 +95,11 @@ func (s *accessManagerSuite) TestAuthorize_MalformedSubjectOrResource() {
 
 	assert.IsType(s.T(), new(RequestMalformedError), err)
 
-	testSubject.AssertNumberOfCalls(s.T(), "GetRole", 1)
+	testSubject.AssertNumberOfCalls(s.T(), "GetRoles", 1)
 	testResource.AssertNumberOfCalls(s.T(), "GetResourceName", 1)
 
 	// Working Subject, failing Resource.
-	testSubject.On("GetRole").Return(basicRoleName)
+	testSubject.On("GetRoles").Return(getBasicRolesSet())
 	testResource.On("GetResourceName").Return("").Once()
 
 	err = manager.Authorize(testRequest)
@@ -125,7 +125,7 @@ func (s *accessManagerSuite) TestAuthorize_NoPermissions() {
 	testSubject := new(subjectMock)
 	testResource := new(resourceMock)
 
-	testSubject.On("GetRole").Return(basicRoleName)
+	testSubject.On("GetRoles").Return(getBasicRolesSet())
 	testResource.On("GetResourceName").Return(basicResourceOneName)
 
 	testRequest := &AccessRequest{
@@ -139,7 +139,7 @@ func (s *accessManagerSuite) TestAuthorize_NoPermissions() {
 	testPolicyProvider.AssertNumberOfCalls(s.T(), "GetRole", 1)
 	assert.Error(s.T(), err)
 
-	testRole := getBasicRole()
+	testRole := getBasicRoleOne()
 
 	// Empty grants check.
 	testRole.Grants = nil
@@ -158,7 +158,7 @@ func (s *accessManagerSuite) TestAuthorize_NoPermissions() {
 }
 
 func (s *accessManagerSuite) TestAuthorize_ActionsWithoutConditions() {
-	testRole := getBasicRole()
+	testRole := getBasicRoleOne()
 
 	testPolicyProvider := new(policyProviderMock)
 	testPolicyProvider.On("GetRole", mock.Anything).Return(testRole, nil)
@@ -168,7 +168,7 @@ func (s *accessManagerSuite) TestAuthorize_ActionsWithoutConditions() {
 	testSubject := new(subjectMock)
 	testResource := new(resourceMock)
 
-	testSubject.On("GetRole").Return(basicRoleName)
+	testSubject.On("GetRoles").Return(getBasicRolesSet())
 	testResource.On("GetResourceName").Return(basicResourceOneName)
 
 	// Action does not exist on role.
@@ -181,22 +181,26 @@ func (s *accessManagerSuite) TestAuthorize_ActionsWithoutConditions() {
 	err := manager.Authorize(testRequest)
 
 	assert.IsType(s.T(), new(AccessDeniedError), err)
-	assert.IsType(s.T(), new(PermissionNotGrantedError), err.(*AccessDeniedError).Reason())
+	assert.IsType(s.T(), new(PermissionError), err.(*AccessDeniedError).Errors.First())
 
-	// One of the actions does not exists on role.
+	// One of the actions does not exist on role.
 	testRequest.Actions = []string{createAction, deleteAction}
-
 	err = manager.Authorize(testRequest)
 
 	assert.IsType(s.T(), new(AccessDeniedError), err)
-	assert.IsType(s.T(), new(PermissionNotGrantedError), err.(*AccessDeniedError).Reason())
+	assert.IsType(s.T(), new(PermissionError), err.(*AccessDeniedError).Errors.First())
 
 	// One of the actions is empty string.
 	testRequest.Actions = []string{createAction, ""}
-
 	err = manager.Authorize(testRequest)
 
 	assert.IsType(s.T(), new(RequestMalformedError), err)
+
+	// Action exists on role.
+	testRequest.Actions = []string{createAction}
+	err = manager.Authorize(testRequest)
+
+	assert.Nil(s.T(), err)
 }
 
 func (s *accessManagerSuite) TestAuthorize_ActionsWithConditions() {
@@ -210,7 +214,7 @@ func (s *accessManagerSuite) TestAuthorize_ActionsWithConditions() {
 		Action:     testConditionedAction,
 		Conditions: Conditions{testWorkingCondition},
 	}
-	testRole := getBasicRole()
+	testRole := getBasicRoleOne()
 	testRole.Grants[basicResourceOneName] = append(testRole.Grants[basicResourceOneName], testConditionedPermission)
 
 	testPolicyProvider := new(policyProviderMock)
@@ -221,7 +225,7 @@ func (s *accessManagerSuite) TestAuthorize_ActionsWithConditions() {
 	testSubject := new(subjectMock)
 	testResource := new(resourceMock)
 
-	testSubject.On("GetRole").Return(basicRoleName)
+	testSubject.On("GetRoles").Return(getBasicRolesSet())
 	testResource.On("GetResourceName").Return(basicResourceOneName)
 
 	testRequest := &AccessRequest{
@@ -243,17 +247,21 @@ func (s *accessManagerSuite) TestAuthorize_ActionsWithConditions() {
 	testConditionedPermission.Conditions = Conditions{testFailingCondition}
 
 	err = manager.Authorize(testRequest)
+	permissionErr := err.(*AccessDeniedError).Errors.First()
 
 	assert.IsType(s.T(), new(AccessDeniedError), err)
-	assert.IsType(s.T(), new(ConditionNotSatisfiedError), err.(*AccessDeniedError).Reason())
+	assert.IsType(s.T(), new(PermissionError), permissionErr)
+	assert.IsType(s.T(), new(ConditionNotSatisfiedError), permissionErr.ConditionError)
 
 	// AND - should expect all Conditions to be satisfied
 	testConditionedPermission.Conditions = Conditions{testWorkingCondition, testWorkingCondition, testFailingCondition}
 
 	err = manager.Authorize(testRequest)
+	permissionErr = err.(*AccessDeniedError).Errors.First()
 
 	assert.IsType(s.T(), new(AccessDeniedError), err)
-	assert.IsType(s.T(), new(ConditionNotSatisfiedError), err.(*AccessDeniedError).Reason())
+	assert.IsType(s.T(), new(PermissionError), permissionErr)
+	assert.IsType(s.T(), new(ConditionNotSatisfiedError), permissionErr.ConditionError)
 
 	// OR - should expect one of Permissions to be granted
 	testConditionedPermission.Conditions = Conditions{testWorkingCondition, testFailingCondition}
@@ -272,14 +280,14 @@ func (s *accessManagerSuite) TestAuthorize_ActionsWithConditions() {
 
 func (s *accessManagerSuite) TestAuthorize_UnknownConditionError() {
 	testConditionedAction := "conditioned-action"
-	testRole := getBasicRole()
+	testRole := getBasicRoleOne()
 
 	testParentRole := getBasicParentRole()
 
 	testRole.Parents = []string{testParentRole.ID}
 
 	testPolicyProvider := new(policyProviderMock)
-	testPolicyProvider.On("GetRole", basicRoleName).Return(testRole, nil)
+	testPolicyProvider.On("GetRole", basicRoleOneName).Return(testRole, nil)
 	testPolicyProvider.On("GetRole", basicParentRoleName).Return(testParentRole, nil)
 
 	// Failing Condition
@@ -300,7 +308,7 @@ func (s *accessManagerSuite) TestAuthorize_UnknownConditionError() {
 	testSubject := new(subjectMock)
 	testResource := new(resourceMock)
 
-	testSubject.On("GetRole").Return(basicRoleName)
+	testSubject.On("GetRoles").Return(getBasicRolesSet())
 	testResource.On("GetResourceName").Return(basicResourceOneName)
 
 	testRequest := &AccessRequest{
@@ -315,7 +323,6 @@ func (s *accessManagerSuite) TestAuthorize_UnknownConditionError() {
 
 	// Unknown error on parents
 	testRole.Grants[basicResourceOneName] = Permissions{}
-
 	testParentRole.Grants[basicResourceOneName] = append(testParentRole.Grants[basicResourceOneName], testConditionedPermission)
 
 	err = manager.Authorize(testRequest)
@@ -324,13 +331,13 @@ func (s *accessManagerSuite) TestAuthorize_UnknownConditionError() {
 }
 
 func (s *accessManagerSuite) TestAuthorize_ActionsOnParents() {
-	testRole := getBasicRole()
+	testRole := getBasicRoleOne()
 	testParentRole := getBasicParentRole()
 
 	testRole.Parents = []string{testParentRole.ID}
 
 	testPolicyProvider := new(policyProviderMock)
-	testPolicyProvider.On("GetRole", basicRoleName).Return(testRole, nil)
+	testPolicyProvider.On("GetRole", basicRoleOneName).Return(testRole, nil)
 	testPolicyProvider.On("GetRole", basicParentRoleName).Return(testParentRole, nil)
 
 	manager := NewAccessManager(testPolicyProvider)
@@ -338,7 +345,7 @@ func (s *accessManagerSuite) TestAuthorize_ActionsOnParents() {
 	testSubject := new(subjectMock)
 	testResource := new(resourceMock)
 
-	testSubject.On("GetRole").Return(basicRoleName)
+	testSubject.On("GetRoles").Return(getBasicRolesSet())
 	testResource.On("GetResourceName").Return(basicResourceOneName)
 
 	// Action exist on parent.
@@ -358,7 +365,7 @@ func (s *accessManagerSuite) TestAuthorize_ActionsOnParents() {
 	err = manager.Authorize(testRequest)
 
 	assert.IsType(s.T(), new(AccessDeniedError), err)
-	assert.IsDecreasing(s.T(), new(PermissionNotGrantedError), err.(*AccessDeniedError).Reason())
+	assert.IsDecreasing(s.T(), new(PermissionError), err.(*AccessDeniedError).Errors.First())
 
 	testGrantParentRoleName := "BasicGrandParent"
 	testGrandParentRole := getBasicParentRole()
@@ -371,24 +378,76 @@ func (s *accessManagerSuite) TestAuthorize_ActionsOnParents() {
 
 	testParentRole.Parents = []string{testGrantParentRoleName}
 
-	// Action exist on grand parent.
+	// Action exist on grandparent.
 	testRequest.Actions = []string{deleteAction}
 
 	err = manager.Authorize(testRequest)
 
 	assert.Nil(s.T(), err)
 
-	// Ignore inheritance cycle when permission is granted beforehand
+	// Ignore inheritance cycle when permission is granted beforehand.
 	testGrandParentRole.Parents = []string{testRole.ID}
 
 	err = manager.Authorize(testRequest)
 
 	assert.Nil(s.T(), err)
 
-	// Detect inheritance cycle when permission is not granted beforehand
+	// Detect inheritance cycle when permission is not granted beforehand.
 	testRequest.Actions = []string{"NewAction"}
 
 	err = manager.Authorize(testRequest)
 
 	assert.IsType(s.T(), new(RoleInheritanceCycleError), err)
+}
+
+func (s *accessManagerSuite) TestAuthorize_MultipleRoles() {
+	testRoleOne := getBasicRoleOne()
+	testRoleTwo := getBasicRoleTwo()
+
+	testMissingAction := "missing-action"
+
+	testPolicyProvider := new(policyProviderMock)
+	testPolicyProvider.On("GetRole", basicRoleOneName).Return(testRoleOne, nil)
+	testPolicyProvider.On("GetRole", basicRoleTwoName).Return(testRoleTwo, nil)
+
+	manager := NewAccessManager(testPolicyProvider)
+
+	testSubject := new(subjectMock)
+	testResource := new(resourceMock)
+
+	testSubject.On("GetRoles").Return([]string{basicRoleOneName, basicRoleTwoName})
+	testResource.On("GetResourceName").Return(basicResourceOneName)
+
+	// Action does not exist on neither role.
+	testRequest := &AccessRequest{
+		Subject:  testSubject,
+		Resource: testResource,
+		Actions:  []string{testMissingAction, "delete"},
+	}
+
+	err := manager.Authorize(testRequest)
+	accessError := err.(*AccessDeniedError)
+
+	assert.IsType(s.T(), new(AccessDeniedError), err)
+
+	// Should have one error per each Role that is missing the Permission for testMissingAction.
+	// Missing "delete" action on testRoleOne won't be included, as it fails early.
+	// @TODO: Adjust when complete validation option is introduced.
+	assert.True(s.T(), len(accessError.Errors) == 2)
+
+	roleOneErrors := accessError.Errors.GetByRoleName(basicRoleOneName)
+	assert.True(s.T(), len(roleOneErrors) == 1)
+	assert.True(s.T(), roleOneErrors[0].Action == testMissingAction)
+
+	roleTwoErrors := accessError.Errors.GetByRoleName(basicRoleTwoName)
+	assert.True(s.T(), len(roleTwoErrors) == 1)
+	assert.True(s.T(), roleTwoErrors[0].Action == testMissingAction)
+
+	assert.True(s.T(), len(accessError.Errors.GetByAction(testMissingAction)) == 2)
+
+	// Action exists on one of the roles.
+	testRequest.Actions = []string{deleteAction}
+	err = manager.Authorize(testRequest)
+
+	assert.Nil(s.T(), err)
 }

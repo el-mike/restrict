@@ -5,8 +5,8 @@ type User struct {
 }
 
 // Subject interface implementation.
-func (u *User) GetRole() string {
-	return "User"
+func (u *User) GetRoles() []string {
+	return []string{"User"}
 }
 
 type Conversation struct {

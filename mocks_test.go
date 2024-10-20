@@ -5,7 +5,8 @@ import (
 )
 
 const (
-	basicRoleName        = "BasicRole"
+	basicRoleOneName     = "BasicRoleOne"
+	basicRoleTwoName     = "BasicRoleTwo"
 	basicParentRoleName  = "BasicParentRole"
 	basicResourceOneName = "BasicResourceOne"
 	basicResourceTwoName = "BasicResourceTwo"
@@ -20,6 +21,10 @@ const (
 
 const basicConditionOne = "BASIC_CONDITION_ONE"
 
+func getBasicRolesSet() []string {
+	return []string{basicRoleOneName}
+}
+
 type subjectMock struct {
 	mock.Mock
 
@@ -29,16 +34,16 @@ type subjectMock struct {
 	FieldThree []int
 }
 
-func (m *subjectMock) GetRole() string {
+func (m *subjectMock) GetRoles() []string {
 	args := m.Called()
 
-	// Note that this is not checking if first argument is string, so "" (empty string)
-	// can be used when we want to test failing GetRole.
+	// If not specified exactly when using the mock, it will return an array with single role.
+	// This is helpful for tests where roles don't matter than much.
 	if args.Get(0) == nil {
-		return basicRoleName
+		return getBasicRolesSet()
 	}
 
-	return args.String(0)
+	return args.Get(0).([]string)
 }
 
 type resourceMock struct {
@@ -83,9 +88,9 @@ func (m *conditionMock) Check(request *AccessRequest) error {
 	return args.Error(0)
 }
 
-func getBasicRole() *Role {
+func getBasicRoleOne() *Role {
 	return &Role{
-		ID:          basicRoleName,
+		ID:          basicRoleOneName,
 		Description: "Basic Role",
 		Grants: GrantsMap{
 			basicResourceOneName: {
@@ -96,8 +101,23 @@ func getBasicRole() *Role {
 	}
 }
 
+func getBasicRoleTwo() *Role {
+	return &Role{
+		ID:          basicRoleTwoName,
+		Description: "Basic Role",
+		Grants: GrantsMap{
+			basicResourceOneName: {
+				&Permission{Action: createAction},
+				&Permission{Action: readAction},
+				&Permission{Action: updateAction},
+				&Permission{Action: deleteAction},
+			},
+		},
+	}
+}
+
 func getBasicParentRole() *Role {
-	role := getBasicRole()
+	role := getBasicRoleOne()
 
 	role.ID = basicParentRoleName
 	role.Description = "Basic Parent Role"
@@ -109,7 +129,7 @@ func getBasicParentRole() *Role {
 func getBasicPolicy() *PolicyDefinition {
 	return &PolicyDefinition{
 		Roles: Roles{
-			basicRoleName: getBasicRole(),
+			basicRoleOneName: getBasicRoleOne(),
 		},
 	}
 }
