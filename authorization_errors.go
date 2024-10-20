@@ -11,7 +11,7 @@ type PermissionErrors []*PermissionError
 
 // First - returns the first PermissionError encountered when performing authorization.
 func (ae PermissionErrors) First() *PermissionError {
-	if ae == nil || len(ae) == 0 {
+	if len(ae) == 0 {
 		return nil
 	}
 
@@ -49,7 +49,7 @@ func (ae PermissionErrors) GetByAction(action string) PermissionErrors {
 		}
 	}
 
-	return nil
+	return result
 }
 
 // GetFailedActions - returns all Actions for which access was denied.

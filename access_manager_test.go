@@ -422,13 +422,28 @@ func (s *accessManagerSuite) TestAuthorize_MultipleRoles() {
 	testRequest := &AccessRequest{
 		Subject:  testSubject,
 		Resource: testResource,
-		Actions:  []string{testMissingAction},
+		Actions:  []string{testMissingAction, "delete"},
 	}
 
 	err := manager.Authorize(testRequest)
+	accessError := err.(*AccessDeniedError)
 
 	assert.IsType(s.T(), new(AccessDeniedError), err)
-	assert.IsType(s.T(), new(PermissionError), err.(*AccessDeniedError).Errors.First())
+
+	// Should have one error per each Role that is missing the Permission for testMissingAction.
+	// Missing "delete" action on testRoleOne won't be included, as it fails early.
+	// @TODO: Adjust when complete validation option is introduced.
+	assert.True(s.T(), len(accessError.Errors) == 2)
+
+	roleOneErrors := accessError.Errors.GetByRoleName(basicRoleOneName)
+	assert.True(s.T(), len(roleOneErrors) == 1)
+	assert.True(s.T(), roleOneErrors[0].Action == testMissingAction)
+
+	roleTwoErrors := accessError.Errors.GetByRoleName(basicRoleTwoName)
+	assert.True(s.T(), len(roleTwoErrors) == 1)
+	assert.True(s.T(), roleTwoErrors[0].Action == testMissingAction)
+
+	assert.True(s.T(), len(accessError.Errors.GetByAction(testMissingAction)) == 2)
 
 	// Action exists on one of the roles.
 	testRequest.Actions = []string{deleteAction}
