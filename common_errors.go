@@ -73,49 +73,6 @@ func (e *PermissionPresetAlreadyExistsError) Error() string {
 	return fmt.Sprintf("Permission preset with name: \"%s\" already exists", e.name)
 }
 
-// AccessDeniedError - thrown when AccessRequest could not be satisfied due to
-// insufficient privileges.
-type AccessDeniedError struct {
-	action  string
-	request *AccessRequest
-	reason  error
-}
-
-// newAccessDeniedError - returns new AccessDeniedError instance.
-func newAccessDeniedError(request *AccessRequest, action string, reason error) *AccessDeniedError {
-	return &AccessDeniedError{
-		request: request,
-		action:  action,
-		reason:  reason,
-	}
-}
-
-// Error - error interface implementation.
-func (e *AccessDeniedError) Error() string {
-	return fmt.Sprintf("Access denied for action: \"%s\". Reason: %v", e.action, e.reason.Error())
-}
-
-// FailedRequest - returns an AccessRequest for which access has been denied.
-func (e *AccessDeniedError) FailedRequest() *AccessRequest {
-	return e.request
-}
-
-// Reason - returns underlying reason (an error) for denying the access.
-func (e *AccessDeniedError) Reason() error {
-	return e.reason
-}
-
-// FailedCondition - helper function for retrieving underlying failed Condition.
-func (e *AccessDeniedError) FailedCondition() Condition {
-	if e.reason != nil {
-		if conditionErr, ok := e.reason.(*ConditionNotSatisfiedError); ok {
-			return conditionErr.condition
-		}
-	}
-
-	return nil
-}
-
 // RequestMalformedError - thrown when AccessRequest is not correct or
 // does not contain all necessary information.
 type RequestMalformedError struct {
@@ -209,63 +166,6 @@ func (e *ValueDescriptorMalformedError) Reason() error {
 // FailedDescriptor - returns failed ValueDescriptor.
 func (e *ValueDescriptorMalformedError) FailedDescriptor() *ValueDescriptor {
 	return e.descriptor
-}
-
-// ConditionNotSatisfiedError - thrown when given Condition was not satisfied due to
-// insufficient privileges for given AccessRequest.
-type ConditionNotSatisfiedError struct {
-	condition Condition
-	request   *AccessRequest
-	reason    error
-}
-
-// NewConditionNotSatisfiedError - returns new ConditionNotSatisfiedError instance.
-func NewConditionNotSatisfiedError(condition Condition, request *AccessRequest, reason error) *ConditionNotSatisfiedError {
-	return &ConditionNotSatisfiedError{
-		condition: condition,
-		request:   request,
-		reason:    reason,
-	}
-}
-
-// Error - error interface implementation.
-func (e *ConditionNotSatisfiedError) Error() string {
-	return fmt.Sprintf("Condition: \"%v\" was not satisfied! %s", e.condition.Type(), e.reason.Error())
-}
-
-// Reason - returns underlying reason (an error) of failing Condition.
-func (e *ConditionNotSatisfiedError) Reason() error {
-	return e.reason
-}
-
-// FailedCondition - returns failed Condition.
-func (e *ConditionNotSatisfiedError) FailedCondition() Condition {
-	return e.condition
-}
-
-// FailedRequest - returns failed AccessRequest.
-func (e *ConditionNotSatisfiedError) FailedRequest() *AccessRequest {
-	return e.request
-}
-
-// PermissionNotGrantedError - thrown when Permission grant for action was not found
-// for given Resource.
-type PermissionNotGrantedError struct {
-	action       string
-	resourceName string
-}
-
-// newPermissionNotGrantedError - returns new ActionNotFoundError instance.
-func newPermissionNotGrantedError(action string, resourceName string) *PermissionNotGrantedError {
-	return &PermissionNotGrantedError{
-		action:       action,
-		resourceName: resourceName,
-	}
-}
-
-// Error - error interface implementation.
-func (e *PermissionNotGrantedError) Error() string {
-	return fmt.Sprintf("Permission for action: \"%v\" is not granted for Resource: \"%v\"", e.action, e.resourceName)
 }
 
 // RoleInheritanceCycleError - thrown when circular Role inheritance is detected.

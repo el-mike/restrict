@@ -118,7 +118,7 @@ func (s *policyManagerSuite) TestLoadPolicy_ApplyPresets() {
 		&Permission{Preset: "testPreset2"},
 	}
 
-	testPolicy.Roles[basicRoleName].Grants[basicResourceOneName] = testPermissions
+	testPolicy.Roles[basicRoleOneName].Grants[basicResourceOneName] = testPermissions
 
 	err := manager.LoadPolicy()
 
@@ -136,7 +136,7 @@ func (s *policyManagerSuite) TestLoadPolicy_ApplyPresetFailure() {
 	manager, _ := NewPolicyManager(testAdapter, false)
 
 	// applyPreset error handling - missing preset for Permission
-	testPolicy.Roles[basicRoleName].Grants[basicResourceOneName][0].Preset = "incorrect-preset"
+	testPolicy.Roles[basicRoleOneName].Grants[basicResourceOneName][0].Preset = "incorrect-preset"
 
 	err := manager.LoadPolicy()
 
@@ -197,9 +197,9 @@ func (s *policyManagerSuite) TestGetRole() {
 	assert.IsType(s.T(), new(RoleNotFoundError), err)
 
 	// Correct role
-	role, err = manager.GetRole(basicRoleName)
+	role, err = manager.GetRole(basicRoleOneName)
 
-	assert.Equal(s.T(), testPolicy.Roles[basicRoleName], role)
+	assert.Equal(s.T(), testPolicy.Roles[basicRoleOneName], role)
 	assert.Nil(s.T(), err)
 }
 
@@ -214,7 +214,7 @@ func (s *policyManagerSuite) TestAddRole() {
 
 	// Existing role
 	testExistingRole := &Role{
-		ID: basicRoleName,
+		ID: basicRoleOneName,
 	}
 
 	err := manager.AddRole(testExistingRole)
@@ -260,7 +260,7 @@ func (s *policyManagerSuite) TestUpdateRole() {
 
 	// Existing role
 	testExistingRole := &Role{
-		ID: basicRoleName,
+		ID: basicRoleOneName,
 	}
 
 	err = manager.UpdateRole(testExistingRole)
@@ -290,7 +290,7 @@ func (s *policyManagerSuite) TestUpsertRole() {
 	}
 
 	testExistingRole := &Role{
-		ID: basicRoleName,
+		ID: basicRoleOneName,
 	}
 
 	err := manager.UpsertRole(testNewRole)
@@ -324,12 +324,12 @@ func (s *policyManagerSuite) TestDeleteRole() {
 	// Correct role, auto update
 	manager.EnableAutoUpdate()
 
-	err = manager.DeleteRole(basicRoleName)
+	err = manager.DeleteRole(basicRoleOneName)
 
 	assert.Nil(s.T(), err)
 	testAdapter.AssertNumberOfCalls(s.T(), "SavePolicy", 1)
 
-	_, err = manager.GetRole(basicRoleName)
+	_, err = manager.GetRole(basicRoleOneName)
 
 	assert.IsType(s.T(), new(RoleNotFoundError), err)
 }
@@ -347,14 +347,14 @@ func (s *policyManagerSuite) TestAddPermission() {
 		Action: createAction,
 	}
 
-	assert.Nil(s.T(), testPolicy.Roles[basicRoleName].Grants[basicResourceTwoName])
+	assert.Nil(s.T(), testPolicy.Roles[basicRoleOneName].Grants[basicResourceTwoName])
 
 	// Incorrect role, without auto update
 	err := manager.AddPermission("INCORRECT_ROLE", basicResourceTwoName, testPermission)
 
 	assert.IsType(s.T(), new(RoleNotFoundError), err)
 
-	err = manager.AddPermission(basicRoleName, basicResourceTwoName, testPermission)
+	err = manager.AddPermission(basicRoleOneName, basicResourceTwoName, testPermission)
 
 	assert.Nil(s.T(), err)
 	testAdapter.AssertNumberOfCalls(s.T(), "SavePolicy", 0)
@@ -362,14 +362,14 @@ func (s *policyManagerSuite) TestAddPermission() {
 	// With auto update
 	manager.EnableAutoUpdate()
 
-	_ = manager.AddPermission(basicRoleName, basicResourceTwoName, testPermission)
+	_ = manager.AddPermission(basicRoleOneName, basicResourceTwoName, testPermission)
 
 	testAdapter.AssertNumberOfCalls(s.T(), "SavePolicy", 1)
 
 	// Try preset application
 	testPermission.Preset = "incorrect-preset"
 
-	err = manager.AddPermission(basicRoleName, basicResourceTwoName, testPermission)
+	err = manager.AddPermission(basicRoleOneName, basicResourceTwoName, testPermission)
 
 	assert.IsType(s.T(), new(PermissionPresetNotFoundError), err)
 }
@@ -383,7 +383,7 @@ func (s *policyManagerSuite) TestDeletePermission() {
 
 	manager, _ := NewPolicyManager(testAdapter, false)
 
-	assert.Equal(s.T(), len(testPolicy.Roles[basicRoleName].Grants[basicResourceOneName]), 2)
+	assert.Equal(s.T(), len(testPolicy.Roles[basicRoleOneName].Grants[basicResourceOneName]), 2)
 
 	// Incorrect role, without auto update
 	err := manager.DeletePermission("INCORRECT_ROLE", basicResourceOneName, createAction)
@@ -394,17 +394,17 @@ func (s *policyManagerSuite) TestDeletePermission() {
 	// Correct role, auto update
 	manager.EnableAutoUpdate()
 
-	err = manager.DeletePermission(basicRoleName, basicResourceOneName, createAction)
+	err = manager.DeletePermission(basicRoleOneName, basicResourceOneName, createAction)
 
 	assert.Nil(s.T(), err)
 	testAdapter.AssertNumberOfCalls(s.T(), "SavePolicy", 1)
 
-	role, _ := manager.GetRole(basicRoleName)
+	role, _ := manager.GetRole(basicRoleOneName)
 
 	assert.Equal(s.T(), len(role.Grants[basicResourceOneName]), 1)
 
 	// Incorrect action (do nothing)
-	err = manager.DeletePermission(basicRoleName, basicResourceOneName, "incorrect-action")
+	err = manager.DeletePermission(basicRoleOneName, basicResourceOneName, "incorrect-action")
 
 	assert.Nil(s.T(), err)
 }

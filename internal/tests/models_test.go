@@ -13,12 +13,12 @@ const (
 type User struct {
 	ID string
 
-	Role string
+	Roles []string
 }
 
 // Subject interface implementation.
-func (u *User) GetRole() string {
-	return u.Role
+func (u *User) GetRoles() []string {
+	return u.Roles
 }
 
 // Resource interface implementation. User can be both Subject and Resource.
