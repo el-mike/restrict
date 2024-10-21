@@ -248,20 +248,22 @@ func (s *accessManagerSuite) TestAuthorize_ActionsWithConditions() {
 
 	err = manager.Authorize(testRequest)
 	permissionErr := err.(*AccessDeniedError).Errors.First()
+	conditionError := permissionErr.ConditionErrors.First()
 
 	assert.IsType(s.T(), new(AccessDeniedError), err)
 	assert.IsType(s.T(), new(PermissionError), permissionErr)
-	assert.IsType(s.T(), new(ConditionNotSatisfiedError), permissionErr.ConditionError)
+	assert.IsType(s.T(), new(ConditionNotSatisfiedError), conditionError)
 
 	// AND - should expect all Conditions to be satisfied
 	testConditionedPermission.Conditions = Conditions{testWorkingCondition, testWorkingCondition, testFailingCondition}
 
 	err = manager.Authorize(testRequest)
 	permissionErr = err.(*AccessDeniedError).Errors.First()
+	conditionError = permissionErr.ConditionErrors.First()
 
 	assert.IsType(s.T(), new(AccessDeniedError), err)
 	assert.IsType(s.T(), new(PermissionError), permissionErr)
-	assert.IsType(s.T(), new(ConditionNotSatisfiedError), permissionErr.ConditionError)
+	assert.IsType(s.T(), new(ConditionNotSatisfiedError), conditionError)
 
 	// OR - should expect one of Permissions to be granted
 	testConditionedPermission.Conditions = Conditions{testWorkingCondition, testFailingCondition}
@@ -429,10 +431,6 @@ func (s *accessManagerSuite) TestAuthorize_MultipleRoles() {
 	accessError := err.(*AccessDeniedError)
 
 	assert.IsType(s.T(), new(AccessDeniedError), err)
-
-	// Should have one error per each Role that is missing the Permission for testMissingAction.
-	// Missing "delete" action on testRoleOne won't be included, as it fails early.
-	// @TODO: Adjust when complete validation option is introduced.
 	assert.True(s.T(), len(accessError.Errors) == 2)
 
 	roleOneErrors := accessError.Errors.GetByRoleName(basicRoleOneName)
@@ -450,4 +448,168 @@ func (s *accessManagerSuite) TestAuthorize_MultipleRoles() {
 	err = manager.Authorize(testRequest)
 
 	assert.Nil(s.T(), err)
+}
+
+func (s *accessManagerSuite) TestAuthorize_FailEarlyValidation() {
+	testRoleOne := getBasicRoleOne()
+
+	missingActions := []string{"missing-action-one", "missing-action-two", "missing-action-three"}
+	actions := append([]string{readAction}, missingActions...)
+
+	testPolicyProvider := new(policyProviderMock)
+	testPolicyProvider.On("GetRole", basicRoleOneName).Return(testRoleOne, nil)
+
+	manager := NewAccessManager(testPolicyProvider)
+
+	testSubject := new(subjectMock)
+	testResource := new(resourceMock)
+
+	testSubject.On("GetRoles").Return([]string{basicRoleOneName})
+	testResource.On("GetResourceName").Return(basicResourceOneName)
+
+	// Missing Permission for Actions
+	testRequest := &AccessRequest{
+		Subject:  testSubject,
+		Resource: testResource,
+		Actions:  actions,
+	}
+
+	err := manager.Authorize(testRequest)
+	accessError := err.(*AccessDeniedError)
+
+	// Expected 1 PermissionError despite 3 potential Permission Errors.
+	// The first returned error should be the one for the first Action declared in the AccessRequest.
+	assert.True(s.T(), len(accessError.Errors) == 1)
+	assert.True(s.T(), accessError.Errors.First().Action == missingActions[0])
+}
+
+func (s *accessManagerSuite) TestAuthorize_CompleteValidationSingleRole() {
+	testRole := getBasicRoleOne()
+
+	missingActions := []string{"missing-action-one", "missing-action-two", "missing-action-three"}
+	actions := append([]string{readAction}, missingActions...)
+
+	testPolicyProvider := new(policyProviderMock)
+	testPolicyProvider.On("GetRole", basicRoleOneName).Return(testRole, nil)
+
+	manager := NewAccessManager(testPolicyProvider)
+
+	testSubject := new(subjectMock)
+	testResource := new(resourceMock)
+
+	testSubject.On("GetRoles").Return([]string{basicRoleOneName})
+	testResource.On("GetResourceName").Return(basicResourceOneName)
+
+	// Missing Permission for Actions
+	testRequest := &AccessRequest{
+		Subject:            testSubject,
+		Resource:           testResource,
+		Actions:            actions,
+		CompleteValidation: true,
+	}
+
+	err := manager.Authorize(testRequest)
+	accessError := err.(*AccessDeniedError)
+
+	// Expected 3 PermissionErrors for 3 missing Actions.
+	// The order should match the order of Actions passed in the AccessRequest,
+	// and should be preserved in the returned error.
+	assert.True(s.T(), len(accessError.Errors) == 3)
+
+	for i, permissionErr := range accessError.Errors {
+		assert.True(s.T(), permissionErr.Action == missingActions[i])
+	}
+
+	// Missing Permission for Actions and some failed Conditions
+	failingCondition := new(conditionMock)
+	conditionError := NewConditionNotSatisfiedError(failingCondition, testRequest, s.testError)
+
+	failingCondition.On("Check", mock.Anything).Return(conditionError)
+
+	conditionedPermission := &Permission{
+		Action:     deleteAction,
+		Conditions: Conditions{failingCondition, failingCondition},
+	}
+
+	testRole.Grants[basicResourceOneName] = append(testRole.Grants[basicResourceOneName], conditionedPermission)
+
+	testRequest.Actions = append([]string{deleteAction}, testRequest.Actions...)
+
+	err = manager.Authorize(testRequest)
+	accessError = err.(*AccessDeniedError)
+
+	// Expected 4 PermissionErrors - one for read Action with failing Conditions,
+	// and 3 for missing Actions.
+	// The order should again match the order of Actions passed in the Request.
+	assert.True(s.T(), len(accessError.Errors) == 4)
+
+	assert.True(s.T(), accessError.Errors[0].Action == deleteAction)
+	assert.True(s.T(), accessError.Errors[1].Action == missingActions[0])
+	assert.True(s.T(), accessError.Errors[2].Action == missingActions[1])
+	assert.True(s.T(), accessError.Errors[3].Action == missingActions[2])
+
+	permissionErrWithConditions := accessError.Errors[0]
+
+	// Expecting 2 ConditionErrors, each for one failingConditions in the Grants.
+	assert.True(s.T(), len(permissionErrWithConditions.ConditionErrors) == 2)
+
+	for _, conditionErr := range permissionErrWithConditions.ConditionErrors {
+		assert.True(s.T(), conditionErr.Reason.Error() == s.testError.Error())
+		assert.True(s.T(), conditionErr.Condition == failingCondition)
+	}
+}
+
+func (s *accessManagerSuite) TestAuthorize_CompleteValidationMultipleRoles() {
+	testRoleOne := getBasicRoleOne()
+	testRoleTwo := getBasicRoleTwo()
+
+	missingActions := []string{"missing-action-one", "missing-action-two", "missing-action-three"}
+	actions := append([]string{readAction}, missingActions...)
+
+	testPolicyProvider := new(policyProviderMock)
+	testPolicyProvider.On("GetRole", basicRoleOneName).Return(testRoleOne, nil)
+	testPolicyProvider.On("GetRole", basicRoleTwoName).Return(testRoleTwo, nil)
+
+	manager := NewAccessManager(testPolicyProvider)
+
+	testSubject := new(subjectMock)
+	testResource := new(resourceMock)
+
+	testSubject.On("GetRoles").Return([]string{basicRoleOneName, basicRoleTwoName})
+	testResource.On("GetResourceName").Return(basicResourceOneName)
+
+	// Missing Permission for Actions
+	testRequest := &AccessRequest{
+		Subject:            testSubject,
+		Resource:           testResource,
+		Actions:            actions,
+		CompleteValidation: true,
+	}
+
+	err := manager.Authorize(testRequest)
+	accessError := err.(*AccessDeniedError)
+
+	// Expected 6 PermissionErrors for 3 missing Actions on each Role.
+	// The order should be determined first by the Roles order in the Subject's GetRoles() result,
+	// and then by Actions passed in AccessRequest.
+	assert.True(s.T(), len(accessError.Errors) == 6)
+
+	for i, permissionErr := range accessError.Errors[0:3] {
+		assert.True(s.T(), permissionErr.Action == missingActions[i])
+		assert.True(s.T(), permissionErr.RoleName == basicRoleOneName)
+	}
+
+	for i, permissionErr := range accessError.Errors[3:6] {
+		assert.True(s.T(), permissionErr.Action == missingActions[i])
+		assert.True(s.T(), permissionErr.RoleName == basicRoleTwoName)
+	}
+
+	roleOneErrors := accessError.Errors.GetByRoleName(basicRoleOneName)
+	roleTwoErrors := accessError.Errors.GetByRoleName(basicRoleTwoName)
+
+	assert.True(s.T(), len(roleOneErrors) == 3)
+	assert.True(s.T(), roleOneErrors[0].RoleName == basicRoleOneName)
+
+	assert.True(s.T(), len(roleTwoErrors) == 3)
+	assert.True(s.T(), roleTwoErrors[0].RoleName == basicRoleTwoName)
 }

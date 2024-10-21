@@ -10,6 +10,7 @@ import (
 type PermissionErrors []*PermissionError
 
 // First - returns the first PermissionError encountered when performing authorization.
+// Especially helpful when AccessRequest was set to fail early.
 func (ae PermissionErrors) First() *PermissionError {
 	if len(ae) == 0 {
 		return nil
@@ -87,72 +88,63 @@ func (e *AccessDeniedError) Error() string {
 	return fmt.Sprintf("Access denied for Actions: %s on Resource: %s", strings.Join(failedActions, ", "), e.Request.Resource.GetResourceName())
 }
 
+// ConditionErrors - an alias type for a slice of ConditionNotSatisfiedError.
+type ConditionErrors []*ConditionNotSatisfiedError
+
+// First - returns the first ConditionErrors encountered when validating given Action.
+// Especially helpful when AccessRequest was set to fail early.
+func (ce ConditionErrors) First() *ConditionNotSatisfiedError {
+	if len(ce) == 0 {
+		return nil
+	}
+
+	return ce[0]
+}
+
 // PermissionError - thrown when Permission is not granted for a given Action.
 type PermissionError struct {
-	Action         string
-	RoleName       string
-	ResourceName   string
-	ConditionError error
+	Action          string
+	RoleName        string
+	ResourceName    string
+	ConditionErrors ConditionErrors
 }
 
 // newPermissionError - returns new PermissionError instance.
-func newPermissionError(action, roleName, resourceName string, conditionError error) *PermissionError {
+func newPermissionError(action, roleName, resourceName string, conditionErrors ConditionErrors) *PermissionError {
 	return &PermissionError{
-		Action:         action,
-		RoleName:       roleName,
-		ResourceName:   resourceName,
-		ConditionError: conditionError,
+		Action:          action,
+		RoleName:        roleName,
+		ResourceName:    resourceName,
+		ConditionErrors: conditionErrors,
 	}
 }
 
 // Error - error interface implementation.
 func (e *PermissionError) Error() string {
-	return fmt.Sprintf("Permission for Action: %v is not granted for Resource: %v", e.Action, e.ResourceName)
-}
-
-// FailedCondition - helper function for retrieving underlying failed Condition.
-func (e *PermissionError) FailedCondition() Condition {
-	if e.ConditionError != nil {
-		if conditionErr, ok := e.ConditionError.(*ConditionNotSatisfiedError); ok {
-			return conditionErr.condition
-		}
+	if len(e.ConditionErrors) > 0 {
+		return fmt.Sprintf("Permission for Action: %v is not granted for Resource: %v due to failed Conditions.", e.Action, e.ResourceName)
 	}
 
-	return nil
+	return fmt.Sprintf("Permission for Action: %v is not granted for Resource: %v", e.Action, e.ResourceName)
 }
 
 // ConditionNotSatisfiedError - thrown when given Condition for given AccessRequest.
 type ConditionNotSatisfiedError struct {
-	condition Condition
-	request   *AccessRequest
-	reason    error
+	Condition Condition
+	Request   *AccessRequest
+	Reason    error
 }
 
 // NewConditionNotSatisfiedError - returns new ConditionNotSatisfiedError instance.
 func NewConditionNotSatisfiedError(condition Condition, request *AccessRequest, reason error) *ConditionNotSatisfiedError {
 	return &ConditionNotSatisfiedError{
-		condition: condition,
-		request:   request,
-		reason:    reason,
+		Condition: condition,
+		Request:   request,
+		Reason:    reason,
 	}
 }
 
 // Error - error interface implementation.
 func (e *ConditionNotSatisfiedError) Error() string {
-	return fmt.Sprintf("Condition: \"%v\" was not satisfied! %s", e.condition.Type(), e.reason.Error())
-}
-
-// Reason - returns underlying reason (an error) of failing Condition.
-func (e *ConditionNotSatisfiedError) Reason() error {
-	return e.reason
-}
-
-// FailedCondition - returns failed Condition.
-func (e *ConditionNotSatisfiedError) FailedCondition() Condition {
-	return e.condition
-}
-
-// FailedRequest - returns failed AccessRequest.
-func (e *ConditionNotSatisfiedError) FailedRequest() *AccessRequest {
-	return e.request
+	return fmt.Sprintf("Condition: \"%v\" was not satisfied! %s", e.Condition.Type(), e.Reason.Error())
 }

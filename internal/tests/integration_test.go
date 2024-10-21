@@ -88,10 +88,11 @@ func (s *integrationSuite) testPolicy(policyManager *restrict.PolicyManager) {
 		Actions:  []string{"read"},
 	})
 	permissionErr := err.(*restrict.AccessDeniedError).Errors.First()
+	conditionErr := permissionErr.ConditionErrors.First()
 
 	assert.IsType(s.T(), new(restrict.AccessDeniedError), err)
 	assert.IsType(s.T(), new(restrict.PermissionError), permissionErr)
-	assert.IsType(s.T(), new(restrict.ConditionNotSatisfiedError), permissionErr.ConditionError)
+	assert.IsType(s.T(), new(restrict.ConditionNotSatisfiedError), conditionErr)
 
 	// "read" granted - User belongs to the Conversation.
 	conversation.Participants = []string{s.testUserId}
@@ -133,14 +134,15 @@ func (s *integrationSuite) testPolicy(policyManager *restrict.PolicyManager) {
 		Resource: conversation,
 		Actions:  []string{"delete"},
 	})
-	permissionErr = err.(*restrict.AccessDeniedError).Errors.First()
 
 	assert.IsType(s.T(), new(restrict.AccessDeniedError), err)
 
-	conditionErr := permissionErr.ConditionError
+	permissionErr = err.(*restrict.AccessDeniedError).Errors.First()
+	conditionErr = permissionErr.ConditionErrors.First()
+
 	assert.IsType(s.T(), new(restrict.ConditionNotSatisfiedError), conditionErr)
 
-	condition := permissionErr.FailedCondition().(*restrict.EmptyCondition)
+	condition := conditionErr.Condition.(*restrict.EmptyCondition)
 	assert.Equal(s.T(), "deleteActive", condition.ID)
 
 	// "delete" condition not satisfied - Conversation has to have less than 100 messages.
