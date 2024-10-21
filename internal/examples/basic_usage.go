@@ -56,14 +56,18 @@ func main() {
 			fmt.Println(permissionErr.RoleName)
 			fmt.Println(permissionErr.ResourceName)
 
-			// If the reason of an Permission was failed Condition,
-			// this helper method returns it directly. Otherwise, nil will be returned.
-			failedCondition := permissionErr.FailedCondition()
+			// If the reason of a Permission was failed Condition, it will be stored in ConditionErrors slice.
+			// If there was only one Condition (or CompleteValidation was not set on AccessRequest) .First()
+			// can be used to return it directly.
+			conditionErr := permissionErr.ConditionErrors.First()
 
-			// It can be later cast to the type you want.
-			if emptyCondition, ok := failedCondition.(*restrict.EmptyCondition); failedCondition != nil && ok {
-				fmt.Print(emptyCondition.ID)
+			if conditionErr != nil {
+				// It can be later cast to the type you want.
+				if emptyCondition, ok := conditionErr.Condition.(*restrict.EmptyCondition); ok {
+					fmt.Print(emptyCondition.ID)
+				}
 			}
+
 		}
 	}
 }

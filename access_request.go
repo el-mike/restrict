@@ -18,4 +18,7 @@ type AccessRequest struct {
 	Context Context
 	// SkipConditions - allows to skip Conditions while checking the access.
 	SkipConditions bool
+	// CompleteValidation - when true, validation won't return early, and all possible errors
+	// will be returned, including all Conditions checks.
+	CompleteValidation bool
 }
