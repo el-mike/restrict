@@ -42,7 +42,7 @@ func (c *EmptyCondition) Check(request *AccessRequest) error {
 	empty := reflect.ValueOf(value).IsZero()
 
 	if !empty {
-		return NewConditionNotSatisfiedError(c, request, fmt.Errorf("Value \"%v\" is not empty", value))
+		return NewConditionNotSatisfiedError(c, request, fmt.Errorf("value \"%v\" is not empty", value))
 	}
 
 	return nil
@@ -63,13 +63,13 @@ func (c *NotEmptyCondition) Check(request *AccessRequest) error {
 	}
 
 	if value == nil {
-		return NewConditionNotSatisfiedError(c, request, fmt.Errorf("Value \"%v\" is empty", value))
+		return NewConditionNotSatisfiedError(c, request, fmt.Errorf("value \"%v\" is empty", value))
 	}
 
 	empty := reflect.ValueOf(value).IsZero()
 
 	if empty {
-		return NewConditionNotSatisfiedError(c, request, fmt.Errorf("Value \"%v\" is empty", value))
+		return NewConditionNotSatisfiedError(c, request, fmt.Errorf("value \"%v\" is empty", value))
 	}
 
 	return nil

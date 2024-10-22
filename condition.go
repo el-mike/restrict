@@ -155,12 +155,12 @@ func (cs *Conditions) UnmarshalYAML(value *yaml.Node) error {
 // ConditionFactory - factory function for Condition.
 type ConditionFactory func() Condition
 
-// ConditionFatoriesMap - map of Condition factories.
-type ConditionFatoriesMap = map[string]ConditionFactory
+// ConditionFactoriesMap - map of Condition factories.
+type ConditionFactoriesMap = map[string]ConditionFactory
 
 // ConditionFactories - stores a map of functions responsible for
 // creating new Conditions, based on their names.
-var ConditionFactories = ConditionFatoriesMap{
+var ConditionFactories = ConditionFactoriesMap{
 	EqualConditionType: func() Condition {
 		return new(EqualCondition)
 	},

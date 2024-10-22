@@ -5,3 +5,5 @@ rules.txt
 
 **/coverage.out
 **/debug.test
+
+internal/examples/basic_usage_test.go

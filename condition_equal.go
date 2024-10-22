@@ -38,13 +38,13 @@ func (c *EqualCondition) Check(request *AccessRequest) error {
 	}
 
 	if !reflect.DeepEqual(left, right) {
-		return NewConditionNotSatisfiedError(c, request, fmt.Errorf("Values \"%v\" and \"%v\" are not equal", left, right))
+		return NewConditionNotSatisfiedError(c, request, fmt.Errorf("values \"%v\" and \"%v\" are not equal", left, right))
 	}
 
 	return nil
 }
 
-// EqualCondition - checks whether given value (Left) is not equal to some other value (Right).
+// NotEqualCondition - checks whether given value (Left) is not equal to some other value (Right).
 type NotEqualCondition baseEqualCondition
 
 // Type - returns Condition's type.
@@ -60,7 +60,7 @@ func (c *NotEqualCondition) Check(request *AccessRequest) error {
 	}
 
 	if reflect.DeepEqual(left, right) {
-		return NewConditionNotSatisfiedError(c, request, fmt.Errorf("Values \"%v\" and \"%v\" are equal", left, right))
+		return NewConditionNotSatisfiedError(c, request, fmt.Errorf("values \"%v\" and \"%v\" are equal", left, right))
 	}
 
 	return nil
