@@ -794,6 +794,8 @@ Check this [Project](https://github.com/el-mike/restrict/projects/3) for upcomin
 2. Set your IDE to use golangci-lint ([instructions](https://golangci-lint.run/usage/integrations/))
 3. Run `git config core.hooksPath .githooks` to wire up project's git hooks
 
+Please note that test suite uses external library [testify](github.com/stretchr/testify), and minimal version of Go required to run the test suite is **1.17**. 
+
 ### Conventions
 
 This repository follows [ConventionalCommits](https://www.conventionalcommits.org/en/v1.0.0/) specification for creating commit messages. There is `prepare-commit-msg` hook set up to ensure following those rules. Branch names should also reflect the type of work it contains - one of following should be used:
