@@ -87,10 +87,11 @@ func (s *integrationSuite) testPolicy(policyManager *restrict.PolicyManager) {
 		Resource: conversation,
 		Actions:  []string{"read"},
 	})
+	assert.IsType(s.T(), new(restrict.AccessDeniedError), err)
+
 	permissionErr := err.(*restrict.AccessDeniedError).Errors.First()
 	conditionErr := permissionErr.ConditionErrors.First()
 
-	assert.IsType(s.T(), new(restrict.AccessDeniedError), err)
 	assert.IsType(s.T(), new(restrict.PermissionError), permissionErr)
 	assert.IsType(s.T(), new(restrict.ConditionNotSatisfiedError), conditionErr)
 
@@ -210,4 +211,61 @@ func (s *integrationSuite) testPolicy(policyManager *restrict.PolicyManager) {
 	})
 
 	assert.Nil(s.T(), err)
+}
+
+func (s *integrationSuite) TestRestrict_CompleteValidation() {
+	policyManager, err := restrict.NewPolicyManager(adapters.NewInMemoryAdapter(PolicyOne), true)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	manager := restrict.NewAccessManager(policyManager)
+
+	user := &User{
+		ID:    s.testUserId,
+		Roles: []string{UserRole},
+	}
+
+	conversation := &Conversation{
+		ID:            "testConversation1",
+		CreatedBy:     "otherUser1",
+		Participants:  []string{},
+		Active:        true,
+		MessagesCount: 20,
+	}
+
+	err = manager.Authorize(&restrict.AccessRequest{
+		Subject:            user,
+		Resource:           conversation,
+		Actions:            []string{"read", "update", "delete"},
+		CompleteValidation: true,
+		Context: restrict.Context{
+			"Max": 10,
+		},
+	})
+
+	assert.IsType(s.T(), new(restrict.AccessDeniedError), err)
+
+	accessErr := err.(*restrict.AccessDeniedError)
+
+	// Expect 3 permission errors, one per each Action.
+	assert.Equal(s.T(), 3, len(accessErr.Errors))
+
+	permissionErrors := accessErr.Errors
+
+	// "read" action failing with unsatisfied hasUserCondition (readWhereBelongs preset).
+	assert.Equal(s.T(), "read", permissionErrors[0].Action)
+	assert.Equal(s.T(), 1, len(permissionErrors[0].ConditionErrors))
+	assert.IsType(s.T(), new(hasUserCondition), permissionErrors[0].ConditionErrors[0].Condition)
+
+	// "update" action failing with unsatisfied EqualCondition (updateOwn preset).
+	assert.Equal(s.T(), "update", permissionErrors[1].Action)
+	assert.Equal(s.T(), 1, len(permissionErrors[1].ConditionErrors))
+	assert.IsType(s.T(), new(restrict.EqualCondition), permissionErrors[1].ConditionErrors[0].Condition)
+
+	// "delete" action failing with unsatisfied EmptyCondition and greaterThanCondition.
+	assert.Equal(s.T(), "delete", permissionErrors[2].Action)
+	assert.Equal(s.T(), 2, len(permissionErrors[2].ConditionErrors))
+	assert.IsType(s.T(), new(restrict.EmptyCondition), permissionErrors[2].ConditionErrors[0].Condition)
+	assert.IsType(s.T(), new(greaterThanCondition), permissionErrors[2].ConditionErrors[1].Condition)
 }
