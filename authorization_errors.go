@@ -131,10 +131,10 @@ func newPermissionError(action, roleName, resourceName string, conditionErrors C
 // Error - error interface implementation.
 func (e *PermissionError) Error() string {
 	if len(e.ConditionErrors) > 0 {
-		return fmt.Sprintf("permission for Action: \"%v\" is not granted for Resource: \"%v\" due to failed Conditions", e.Action, e.ResourceName)
+		return fmt.Sprintf("Permission for Action: \"%v\" is not granted for Resource: \"%v\" due to failed Conditions", e.Action, e.ResourceName)
 	}
 
-	return fmt.Sprintf("permission for Action: \"%v\" is not granted for Resource: \"%v\"", e.Action, e.ResourceName)
+	return fmt.Sprintf("Permission for Action: \"%v\" is not granted for Resource: \"%v\"", e.Action, e.ResourceName)
 }
 
 // ConditionNotSatisfiedError - thrown when given Condition for given AccessRequest.
