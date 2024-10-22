@@ -53,7 +53,7 @@ func newPermissionPresetNotFoundError(name string) *PermissionPresetNotFoundErro
 
 // Error - error interface implementation.
 func (e *PermissionPresetNotFoundError) Error() string {
-	return fmt.Sprintf("Permission preset: \"%s\" has not been found.", e.name)
+	return fmt.Sprintf("Permission preset: \"%s\" has not been found", e.name)
 }
 
 // PermissionPresetAlreadyExistsError - thrown when a new Permission preset is being added
@@ -90,7 +90,7 @@ func newRequestMalformedError(request *AccessRequest, reason error) *RequestMalf
 
 // Error - error interface implementation.
 func (e *RequestMalformedError) Error() string {
-	return "Subject is not defined!"
+	return "Subject is not defined"
 }
 
 // Reason - returns underlying reason (an error) of malformed Request.
@@ -118,7 +118,7 @@ func newConditionFactoryAlreadyExistsError(conditionName string) *ConditionFacto
 
 // Error - error interface implementation.
 func (e *ConditionFactoryAlreadyExistsError) Error() string {
-	return fmt.Sprintf("ConditionFactory for Condition: \"%v\" already exists!", e.conditionName)
+	return fmt.Sprintf("ConditionFactory for Condition: \"%v\" already exists", e.conditionName)
 }
 
 // ConditionFactoryNotFoundError - thrown when ConditionFactory is not found while
@@ -155,7 +155,7 @@ func newValueDescriptorMalformedError(descriptor *ValueDescriptor, reason error)
 
 // Error - error interface implementation.
 func (e *ValueDescriptorMalformedError) Error() string {
-	return fmt.Sprintf("ValueDescriptor could not be resolved! Reason: %s", e.reason.Error())
+	return fmt.Sprintf("ValueDescriptor could not be resolved. Reason: %s", e.reason.Error())
 }
 
 // Reason - returns underlying reason (an error) of malformed ValueDescriptor.

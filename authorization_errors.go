@@ -58,7 +58,7 @@ func (ae PermissionErrors) GetFailedActions() []string {
 	actions := []string{}
 
 	for _, e := range ae {
-		if utils.StringSliceContains(actions, e.Action) {
+		if !utils.StringSliceContains(actions, e.Action) {
 			actions = append(actions, e.Action)
 		}
 	}
@@ -83,9 +83,18 @@ func newAccessDeniedError(request *AccessRequest, errors PermissionErrors) *Acce
 
 // Error - error interface implementation.
 func (e *AccessDeniedError) Error() string {
-	failedActions := e.Errors.GetFailedActions()
+	preparedActions := []string{}
 
-	return fmt.Sprintf("Access denied for Actions: %s on Resource: %s", strings.Join(failedActions, ", "), e.Request.Resource.GetResourceName())
+	for _, action := range e.Errors.GetFailedActions() {
+		preparedActions = append(preparedActions, fmt.Sprintf("\"%s\"", action))
+	}
+
+	actionsNoun := "Action"
+	if len(preparedActions) > 1 {
+		actionsNoun = "Actions"
+	}
+
+	return fmt.Sprintf("access denied for %s: %s on Resource: \"%s\"", actionsNoun, strings.Join(preparedActions, ", "), e.Request.Resource.GetResourceName())
 }
 
 // ConditionErrors - an alias type for a slice of ConditionNotSatisfiedError.
@@ -122,10 +131,10 @@ func newPermissionError(action, roleName, resourceName string, conditionErrors C
 // Error - error interface implementation.
 func (e *PermissionError) Error() string {
 	if len(e.ConditionErrors) > 0 {
-		return fmt.Sprintf("Permission for Action: %v is not granted for Resource: %v due to failed Conditions.", e.Action, e.ResourceName)
+		return fmt.Sprintf("Permission for Action: \"%v\" is not granted for Resource: \"%v\" due to failed Conditions", e.Action, e.ResourceName)
 	}
 
-	return fmt.Sprintf("Permission for Action: %v is not granted for Resource: %v", e.Action, e.ResourceName)
+	return fmt.Sprintf("Permission for Action: \"%v\" is not granted for Resource: \"%v\"", e.Action, e.ResourceName)
 }
 
 // ConditionNotSatisfiedError - thrown when given Condition for given AccessRequest.
@@ -146,5 +155,5 @@ func NewConditionNotSatisfiedError(condition Condition, request *AccessRequest, 
 
 // Error - error interface implementation.
 func (e *ConditionNotSatisfiedError) Error() string {
-	return fmt.Sprintf("Condition: \"%v\" was not satisfied! %s", e.Condition.Type(), e.Reason.Error())
+	return fmt.Sprintf("Condition: \"%v\" was not satisfied, reason: %s", e.Condition.Type(), e.Reason.Error())
 }

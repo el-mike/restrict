@@ -31,7 +31,7 @@ func (am *AccessManager) Authorize(request *AccessRequest) error {
 	resourceName := request.Resource.GetResourceName()
 
 	if len(roles) == 0 || resourceName == "" {
-		return newRequestMalformedError(request, fmt.Errorf("Missing roles or resourceName"))
+		return newRequestMalformedError(request, fmt.Errorf("missing roles or resourceName"))
 	}
 
 	allPermissionErrors := PermissionErrors{}

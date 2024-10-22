@@ -16,5 +16,5 @@ func newFileTypeNotSupportedError(fileType string) *FileTypeNotSupportedError {
 
 // Error - error interface implementation.
 func (e *FileTypeNotSupportedError) Error() string {
-	return fmt.Sprintf("File type: \"%s\" is not supported", e.fileType)
+	return fmt.Sprintf("file type: \"%s\" is not supported", e.fileType)
 }

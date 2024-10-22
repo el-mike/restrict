@@ -34,15 +34,15 @@ func main() {
 	if err = manager.Authorize(&restrict.AccessRequest{
 		Subject:        &User{},
 		Resource:       &Conversation{},
-		Actions:        []string{"read", "delete"},
+		Actions:        []string{"read", "delete", "update"},
 		SkipConditions: false,
 	}); err != nil {
-		fmt.Print(err) // Access denied for actions: "delete". Reason: Permission for action: "delete" is not granted for Resource: "Conversation"
+		fmt.Println(err) // Access denied for action: "delete". Reason: Permission for action: "delete" is not granted for Resource: "Conversation"
 	}
 
 	if accessError, ok := err.(*restrict.AccessDeniedError); ok {
 		// Error() implementation. Returns a message in a form:
-		// Access denied for action: "...". Reason: Permission for action: "..." is not granted for Resource: "..."
+		// Access denied for action/s: "...". Reason: Permission for action: "..." is not granted for Resource: "..."
 		fmt.Println(accessError)
 		// Returns an AccessRequest that failed.
 		fmt.Println(accessError.Request)
