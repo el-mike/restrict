@@ -9,16 +9,6 @@ import (
 // PermissionErrors - an alias type for a slice of PermissionError, with extra helper methods.
 type PermissionErrors []*PermissionError
 
-// First - returns the first PermissionError encountered when performing authorization.
-// Especially helpful when AccessRequest was set to fail early.
-func (ae PermissionErrors) First() *PermissionError {
-	if len(ae) == 0 {
-		return nil
-	}
-
-	return ae[0]
-}
-
 // GetByRoleName - returns PermissionError structs specific to given Role.
 func (ae PermissionErrors) GetByRoleName(roleName string) PermissionErrors {
 	if ae == nil {
@@ -70,14 +60,14 @@ func (ae PermissionErrors) GetFailedActions() []string {
 // insufficient privileges.
 type AccessDeniedError struct {
 	Request *AccessRequest
-	Errors  PermissionErrors
+	Reasons PermissionErrors
 }
 
 // newAccessDeniedError - returns new AccessDeniedError instance.
-func newAccessDeniedError(request *AccessRequest, errors PermissionErrors) *AccessDeniedError {
+func newAccessDeniedError(request *AccessRequest, reasons PermissionErrors) *AccessDeniedError {
 	return &AccessDeniedError{
 		Request: request,
-		Errors:  errors,
+		Reasons: reasons,
 	}
 }
 
@@ -85,7 +75,7 @@ func newAccessDeniedError(request *AccessRequest, errors PermissionErrors) *Acce
 func (e *AccessDeniedError) Error() string {
 	preparedActions := []string{}
 
-	for _, action := range e.Errors.GetFailedActions() {
+	for _, action := range e.Reasons.GetFailedActions() {
 		preparedActions = append(preparedActions, fmt.Sprintf("\"%s\"", action))
 	}
 
@@ -94,21 +84,26 @@ func (e *AccessDeniedError) Error() string {
 		actionsNoun = "Actions"
 	}
 
-	return fmt.Sprintf("access denied for %s: %s on Resource: \"%s\"", actionsNoun, strings.Join(preparedActions, ", "), e.Request.Resource.GetResourceName())
+	return fmt.Sprintf(
+		"access denied for %s: %s on Resource: \"%s\"",
+		actionsNoun,
+		strings.Join(preparedActions, ", "),
+		e.Request.Resource.GetResourceName(),
+	)
+}
+
+// FirstReason - returns the first PermissionError encountered when performing authorization.
+// Especially helpful when AccessRequest was set to fail early.
+func (e *AccessDeniedError) FirstReason() *PermissionError {
+	if len(e.Reasons) == 0 {
+		return nil
+	}
+
+	return e.Reasons[0]
 }
 
 // ConditionErrors - an alias type for a slice of ConditionNotSatisfiedError.
 type ConditionErrors []*ConditionNotSatisfiedError
-
-// First - returns the first ConditionErrors encountered when validating given Action.
-// Especially helpful when AccessRequest was set to fail early.
-func (ce ConditionErrors) First() *ConditionNotSatisfiedError {
-	if len(ce) == 0 {
-		return nil
-	}
-
-	return ce[0]
-}
 
 // PermissionError - thrown when Permission is not granted for a given Action.
 type PermissionError struct {
@@ -130,11 +125,30 @@ func newPermissionError(action, roleName, resourceName string, conditionErrors C
 
 // Error - error interface implementation.
 func (e *PermissionError) Error() string {
-	if len(e.ConditionErrors) > 0 {
-		return fmt.Sprintf("Permission for Action: \"%v\" is not granted for Resource: \"%v\" due to failed Conditions", e.Action, e.ResourceName)
+	if len(e.ConditionErrors) == 0 {
+		return fmt.Sprintf("Permission for Action: \"%v\" is not granted for Resource: \"%v\"", e.Action, e.ResourceName)
 	}
 
-	return fmt.Sprintf("Permission for Action: \"%v\" is not granted for Resource: \"%v\"", e.Action, e.ResourceName)
+	return fmt.Sprintf(
+		"Permission for Action: \"%v\" was denied for Resource: \"%v\" due to failed Conditions",
+		e.Action,
+		e.ResourceName,
+	)
+}
+
+// FirstConditionError - returns the first ConditionNotSatisfiedError encountered when validating given Action.
+// Especially helpful when AccessRequest was set to fail early.
+func (e *PermissionError) FirstConditionError() *ConditionNotSatisfiedError {
+	if len(e.ConditionErrors) == 0 {
+		return nil
+	}
+
+	return e.ConditionErrors[0]
+}
+
+// HasFailedConditions - returns true if error was due to failed Conditions, false otherwise.
+func (e *PermissionError) HasFailedConditions() bool {
+	return len(e.ConditionErrors) > 0
 }
 
 // ConditionNotSatisfiedError - thrown when given Condition for given AccessRequest.

@@ -210,17 +210,3 @@ func (am *AccessManager) checkConditions(permission *Permission, request *Access
 
 	return nil, nil
 }
-
-// IsAccessError - returns true if error is caused by reasons related to Policy validation
-// (Conditions checks, missing Permissions etc.), false otherwise (malformed Policy, reflection errors, etc.)
-func (am *AccessManager) IsAccessError(err error) bool {
-	switch err.(type) {
-	case *ConditionNotSatisfiedError,
-		*PermissionError,
-		*AccessDeniedError:
-		return true
-
-	default:
-		return false
-	}
-}

@@ -89,8 +89,8 @@ func (s *integrationSuite) testPolicy(policyManager *restrict.PolicyManager) {
 	})
 	assert.IsType(s.T(), new(restrict.AccessDeniedError), err)
 
-	permissionErr := err.(*restrict.AccessDeniedError).Errors.First()
-	conditionErr := permissionErr.ConditionErrors.First()
+	permissionErr := err.(*restrict.AccessDeniedError).FirstReason()
+	conditionErr := permissionErr.FirstConditionError()
 
 	assert.IsType(s.T(), new(restrict.PermissionError), permissionErr)
 	assert.IsType(s.T(), new(restrict.ConditionNotSatisfiedError), conditionErr)
@@ -127,7 +127,7 @@ func (s *integrationSuite) testPolicy(policyManager *restrict.PolicyManager) {
 	})
 
 	assert.IsType(s.T(), new(restrict.AccessDeniedError), err)
-	assert.IsType(s.T(), new(restrict.PermissionError), err.(*restrict.AccessDeniedError).Errors.First())
+	assert.IsType(s.T(), new(restrict.PermissionError), err.(*restrict.AccessDeniedError).FirstReason())
 
 	// "delete" condition not satisfied - Conversation must be inactive.
 	err = manager.Authorize(&restrict.AccessRequest{
@@ -138,8 +138,8 @@ func (s *integrationSuite) testPolicy(policyManager *restrict.PolicyManager) {
 
 	assert.IsType(s.T(), new(restrict.AccessDeniedError), err)
 
-	permissionErr = err.(*restrict.AccessDeniedError).Errors.First()
-	conditionErr = permissionErr.ConditionErrors.First()
+	permissionErr = err.(*restrict.AccessDeniedError).FirstReason()
+	conditionErr = permissionErr.FirstConditionError()
 
 	assert.IsType(s.T(), new(restrict.ConditionNotSatisfiedError), conditionErr)
 
@@ -249,9 +249,9 @@ func (s *integrationSuite) TestRestrict_CompleteValidation() {
 	accessErr := err.(*restrict.AccessDeniedError)
 
 	// Expect 3 permission errors, one per each Action.
-	assert.Equal(s.T(), 3, len(accessErr.Errors))
+	assert.Equal(s.T(), 3, len(accessErr.Reasons))
 
-	permissionErrors := accessErr.Errors
+	permissionErrors := accessErr.Reasons
 
 	// "read" action failing with unsatisfied hasUserCondition (readWhereBelongs preset).
 	assert.Equal(s.T(), "read", permissionErrors[0].Action)
