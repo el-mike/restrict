@@ -181,14 +181,14 @@ func (s *accessManagerSuite) TestAuthorize_ActionsWithoutConditions() {
 	err := manager.Authorize(testRequest)
 
 	assert.IsType(s.T(), new(AccessDeniedError), err)
-	assert.IsType(s.T(), new(PermissionError), err.(*AccessDeniedError).Errors.First())
+	assert.IsType(s.T(), new(PermissionError), err.(*AccessDeniedError).FirstReason())
 
 	// One of the actions does not exist on role.
 	testRequest.Actions = []string{createAction, deleteAction}
 	err = manager.Authorize(testRequest)
 
 	assert.IsType(s.T(), new(AccessDeniedError), err)
-	assert.IsType(s.T(), new(PermissionError), err.(*AccessDeniedError).Errors.First())
+	assert.IsType(s.T(), new(PermissionError), err.(*AccessDeniedError).FirstReason())
 
 	// One of the actions is empty string.
 	testRequest.Actions = []string{createAction, ""}
@@ -247,8 +247,8 @@ func (s *accessManagerSuite) TestAuthorize_ActionsWithConditions() {
 	testConditionedPermission.Conditions = Conditions{testFailingCondition}
 
 	err = manager.Authorize(testRequest)
-	permissionErr := err.(*AccessDeniedError).Errors.First()
-	conditionError := permissionErr.ConditionErrors.First()
+	permissionErr := err.(*AccessDeniedError).FirstReason()
+	conditionError := permissionErr.FirstConditionError()
 
 	assert.IsType(s.T(), new(AccessDeniedError), err)
 	assert.IsType(s.T(), new(PermissionError), permissionErr)
@@ -258,8 +258,8 @@ func (s *accessManagerSuite) TestAuthorize_ActionsWithConditions() {
 	testConditionedPermission.Conditions = Conditions{testWorkingCondition, testWorkingCondition, testFailingCondition}
 
 	err = manager.Authorize(testRequest)
-	permissionErr = err.(*AccessDeniedError).Errors.First()
-	conditionError = permissionErr.ConditionErrors.First()
+	permissionErr = err.(*AccessDeniedError).FirstReason()
+	conditionError = permissionErr.FirstConditionError()
 
 	assert.IsType(s.T(), new(AccessDeniedError), err)
 	assert.IsType(s.T(), new(PermissionError), permissionErr)
@@ -367,7 +367,7 @@ func (s *accessManagerSuite) TestAuthorize_ActionsOnParents() {
 	err = manager.Authorize(testRequest)
 
 	assert.IsType(s.T(), new(AccessDeniedError), err)
-	assert.IsDecreasing(s.T(), new(PermissionError), err.(*AccessDeniedError).Errors.First())
+	assert.IsDecreasing(s.T(), new(PermissionError), err.(*AccessDeniedError).FirstReason())
 
 	testGrantParentRoleName := "BasicGrandParent"
 	testGrandParentRole := getBasicParentRole()
@@ -431,17 +431,17 @@ func (s *accessManagerSuite) TestAuthorize_MultipleRoles() {
 	accessError := err.(*AccessDeniedError)
 
 	assert.IsType(s.T(), new(AccessDeniedError), err)
-	assert.True(s.T(), len(accessError.Errors) == 2)
+	assert.True(s.T(), len(accessError.Reasons) == 2)
 
-	roleOneErrors := accessError.Errors.GetByRoleName(basicRoleOneName)
+	roleOneErrors := accessError.Reasons.GetByRoleName(basicRoleOneName)
 	assert.True(s.T(), len(roleOneErrors) == 1)
 	assert.True(s.T(), roleOneErrors[0].Action == testMissingAction)
 
-	roleTwoErrors := accessError.Errors.GetByRoleName(basicRoleTwoName)
+	roleTwoErrors := accessError.Reasons.GetByRoleName(basicRoleTwoName)
 	assert.True(s.T(), len(roleTwoErrors) == 1)
 	assert.True(s.T(), roleTwoErrors[0].Action == testMissingAction)
 
-	assert.True(s.T(), len(accessError.Errors.GetByAction(testMissingAction)) == 2)
+	assert.True(s.T(), len(accessError.Reasons.GetByAction(testMissingAction)) == 2)
 
 	// Action exists on one of the roles.
 	testRequest.Actions = []string{deleteAction}
@@ -479,8 +479,8 @@ func (s *accessManagerSuite) TestAuthorize_FailEarlyValidation() {
 
 	// Expected 1 PermissionError despite 3 potential Permission Errors.
 	// The first returned error should be the one for the first Action declared in the AccessRequest.
-	assert.True(s.T(), len(accessError.Errors) == 1)
-	assert.True(s.T(), accessError.Errors.First().Action == missingActions[0])
+	assert.True(s.T(), len(accessError.Reasons) == 1)
+	assert.True(s.T(), accessError.FirstReason().Action == missingActions[0])
 }
 
 func (s *accessManagerSuite) TestAuthorize_CompleteValidationSingleRole() {
@@ -514,9 +514,9 @@ func (s *accessManagerSuite) TestAuthorize_CompleteValidationSingleRole() {
 	// Expected 3 PermissionErrors for 3 missing Actions.
 	// The order should match the order of Actions passed in the AccessRequest,
 	// and should be preserved in the returned error.
-	assert.True(s.T(), len(accessError.Errors) == 3)
+	assert.True(s.T(), len(accessError.Reasons) == 3)
 
-	for i, permissionErr := range accessError.Errors {
+	for i, permissionErr := range accessError.Reasons {
 		assert.True(s.T(), permissionErr.Action == missingActions[i])
 	}
 
@@ -541,14 +541,14 @@ func (s *accessManagerSuite) TestAuthorize_CompleteValidationSingleRole() {
 	// Expected 4 PermissionErrors - one for read Action with failing Conditions,
 	// and 3 for missing Actions.
 	// The order should again match the order of Actions passed in the Request.
-	assert.True(s.T(), len(accessError.Errors) == 4)
+	assert.True(s.T(), len(accessError.Reasons) == 4)
 
-	assert.True(s.T(), accessError.Errors[0].Action == deleteAction)
-	assert.True(s.T(), accessError.Errors[1].Action == missingActions[0])
-	assert.True(s.T(), accessError.Errors[2].Action == missingActions[1])
-	assert.True(s.T(), accessError.Errors[3].Action == missingActions[2])
+	assert.True(s.T(), accessError.Reasons[0].Action == deleteAction)
+	assert.True(s.T(), accessError.Reasons[1].Action == missingActions[0])
+	assert.True(s.T(), accessError.Reasons[2].Action == missingActions[1])
+	assert.True(s.T(), accessError.Reasons[3].Action == missingActions[2])
 
-	permissionErrWithConditions := accessError.Errors[0]
+	permissionErrWithConditions := accessError.Reasons[0]
 
 	// Expecting 2 ConditionErrors, each for one failingConditions in the Grants.
 	assert.True(s.T(), len(permissionErrWithConditions.ConditionErrors) == 2)
@@ -592,20 +592,20 @@ func (s *accessManagerSuite) TestAuthorize_CompleteValidationMultipleRoles() {
 	// Expected 6 PermissionErrors for 3 missing Actions on each Role.
 	// The order should be determined first by the Roles order in the Subject's GetRoles() result,
 	// and then by Actions passed in AccessRequest.
-	assert.True(s.T(), len(accessError.Errors) == 6)
+	assert.True(s.T(), len(accessError.Reasons) == 6)
 
-	for i, permissionErr := range accessError.Errors[0:3] {
+	for i, permissionErr := range accessError.Reasons[0:3] {
 		assert.True(s.T(), permissionErr.Action == missingActions[i])
 		assert.True(s.T(), permissionErr.RoleName == basicRoleOneName)
 	}
 
-	for i, permissionErr := range accessError.Errors[3:6] {
+	for i, permissionErr := range accessError.Reasons[3:6] {
 		assert.True(s.T(), permissionErr.Action == missingActions[i])
 		assert.True(s.T(), permissionErr.RoleName == basicRoleTwoName)
 	}
 
-	roleOneErrors := accessError.Errors.GetByRoleName(basicRoleOneName)
-	roleTwoErrors := accessError.Errors.GetByRoleName(basicRoleTwoName)
+	roleOneErrors := accessError.Reasons.GetByRoleName(basicRoleOneName)
+	roleTwoErrors := accessError.Reasons.GetByRoleName(basicRoleTwoName)
 
 	assert.True(s.T(), len(roleOneErrors) == 3)
 	assert.True(s.T(), roleOneErrors[0].RoleName == basicRoleOneName)

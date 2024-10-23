@@ -34,32 +34,32 @@ func main() {
 	if err = manager.Authorize(&restrict.AccessRequest{
 		Subject:        &User{},
 		Resource:       &Conversation{},
-		Actions:        []string{"read", "delete", "update"},
+		Actions:        []string{"read"},
 		SkipConditions: false,
 	}); err != nil {
-		fmt.Println(err) // Access denied for action: "delete". Reason: Permission for action: "delete" is not granted for Resource: "Conversation"
+		fmt.Println(err) // access denied for Action: "read" on Resource: "Conversation". Reason: ...
 	}
 
 	if accessError, ok := err.(*restrict.AccessDeniedError); ok {
 		// Error() implementation. Returns a message in a form:
-		// Access denied for action/s: "...". Reason: Permission for action: "..." is not granted for Resource: "..."
+		// Access denied for Action/s: "...". Reason: Permission for action: "..." is not granted for Resource: "..."
 		fmt.Println(accessError)
 		// Returns an AccessRequest that failed.
 		fmt.Println(accessError.Request)
-		// We can use Errors.First() to get the first encountered PermissionError.
-		fmt.Println(accessError.Errors.First())
+		// We can use FirstReason() to get the first encountered PermissionError.
+		// Especially helpful in fail-early mode, where there will only be one Reason.
+		fmt.Println(accessError.FirstReason())
 
-		// We can use Errors property to loop over all PermissionErrors.
-		for _, permissionErr := range accessError.Errors {
+		// We can use Reasons property to loop over all PermissionErrors.
+		for _, permissionErr := range accessError.Reasons {
 			fmt.Println(permissionErr)
 			fmt.Println(permissionErr.Action)
 			fmt.Println(permissionErr.RoleName)
 			fmt.Println(permissionErr.ResourceName)
 
 			// If the reason of a Permission was failed Condition, it will be stored in ConditionErrors slice.
-			// If there was only one Condition (or CompleteValidation was not set on AccessRequest) .First()
-			// can be used to return it directly.
-			conditionErr := permissionErr.ConditionErrors.First()
+			// Especially helpful in fail-early mode, where there will only be one failed Condition.
+			conditionErr := permissionErr.FirstConditionError()
 
 			if conditionErr != nil {
 				// It can be later cast to the type you want.
