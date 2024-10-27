@@ -288,8 +288,9 @@ if accessError, ok := err.(*restrict.AccessDeniedError); ok {
 	fmt.Println(accessError)
 	// Returns an AccessRequest that failed.
 	fmt.Println(accessError.Request)
-	
-	fmt.Pr
+	// Returns first reason for the denied access.
+	// Especially helpful in fail-early mode, where there will only be one Reason.
+	fmt.Println(accessError.FirstReason())
 	
 	// Reasons property will hold all errors that caused the access to be denied.
 	for _, permissionErr := range accessError.Reasons {
@@ -298,50 +299,88 @@ if accessError, ok := err.(*restrict.AccessDeniedError); ok {
 		fmt.Println(permissionErr.RoleName)
 		fmt.Println(permissionErr.ResourceName)
 		
-		for _, conditionErr := 
-}
-	// Returns first reason for the denied access.
-	// Especially helpful in fail-early mode, where there will only be one Reason.
-	fmt.Println(accessError.FirstReason())
-
+		// Returns first ConditionNotSatisfied error for given PermissionError, if any was returned for given PermissionError.
+		// Especially helpful in fail-early mode, where there will only be one failed Condition.
+		fmt.Println(permissionErr.FirstConditionError())
+		
+		// ConditionErrors property will hold all ConditionNotSatisfied errors.
+		for _, conditionErr := range permissionErr.ConditionErrors {
+			fmt.Println(conditionErr)
+			fmt.Println(conditionErr.Reason)
+			
+			// Every ConditionNotSatisfied contains an instance of Condition that returned it,
+			// so it can be tested using type assertion to get more details about failed Condition.
+			if emptyCondition, ok := conditionErr.Condition.(*restrict.EmptyCondition); ok {
+				fmt.Println(emptyCondition.ID)
+			}
+		}
+	}
 }
 ```
 
 ### Validation strategy
 Access can be validated in one of two modes - fail-early or complete. Note that **by default, restrict will run in fail-early mode**. To use complete validation, set `CompleteValidation` to true on `AccessRequest` being authorized.
-When using 
 
-In fail-early mode, validation will be aborted as soon as any policy validation error is encountered. `AccessDeniedError` will only contain one reason for failure, even when Subject with multiple roles is being tested, or when `AccessRequest` contains multiple actions. 
-
-### AccessManager errors
-Since `Authorize` method depends on various operations, including external ones provided in a form of Conditions, its return type is a general `error` type. However, in order to provide easier error handling, when error is caused by policy validation only (i.e. Permission is not granted for given Role or Conditions were not satisfied), `Authorize` returns an instance of `AccessDeniedError`, which has couple of helper methods.
+In **fail-early mode**, validation will be aborted as soon as any policy validation error is encountered. `AccessDeniedError` will only contain one reason for failure, even when Subject with multiple Roles is being tested, or when `AccessRequest` contains multiple Actions. `FirstReason()` and `FirstConditionError()` can be used to make error handling easier in fail-early mode.
 
 ```go
-
 err := manager.Authorize(accessRequest)
-
 if accessError, ok := err.(*restrict.AccessDeniedError); ok {
-	// Error() implementation. Returns a message in a form:
-	// Access denied for action: "...". Reason: Permission for action: "..." is not granted for Resource: "..."
-	fmt.Print(accessError)
-	// Returns an AccessRequest that failed.
-	fmt.Print(accessError.FailedRequest())
-	// Returns underlying error which was the reason of a failure.
-	fmt.Print(accessError.Reason())
-
-	// If the reason of an AccessDeniedError was failed Condition,
-	// this helper method returns it directly. Otherwise, nil will be returned.
-	failedCondition := accessError.FailedCondition()
-
-	// You can later cast the Condition to the type you want.
-	if emptyCondition, ok := failedCondition.(*restrict.EmptyCondition); failedCondition != nil && ok {
-		fmt.Print(emptyCondition.ID)
+	reason := accessError.FirstReason()
+	fmt.Println(reason)
+	
+	conditionErr := reason.FirstConditionError()
+	if conditionErr != nil {
+		fmt.Println(conditionErr)
+		
+		// If needed, ConditionNotSatisfied can be introspected further. 
+		if emptyCondition, ok := conditionErr.Condition.(*restrict.EmptyCondition); ok {
+			fmt.Println(emptyCondition.ID)
+		}
 	}
 }
 ```
 
+In **complete mode**, validation will not be aborted on first encountered error - instead, it will continue until all Roles and Actions are checked, gathering the errors along the way. If given `Permission` have more than one `Condition` attached, they will all be checked as well.
+This mode is helpful when full information about access denial is needed - for example when debugging, or when checking user's access as an administrator.
+
+`Reasons` property on `AccessDeniedError` provides some additional utility methods, that make it easier to handle the errors:
+- `GetByRoleName` will return only the reasons related to checking given Role
+- `GetByAction` will return only the reasons related to checking given Action
+- `GetFailedActions` will return all Actions for which access has been denied
+
+```go
+accessRequest := &restrict.AccessRequest{
+	// ...
+	CompleteValidation: true,
+}
+
+err := manager.Authorize(accessRequest)
+if accessError, ok := err.(*restrict.AccessDeniedError); ok {
+	// Get only the Reasons related to Role user, that were returned for "read" action.
+	userReasons := accessError.Reasons.GetByRoleName("user").GetByAction("read")
+	
+	for _, permissionErr := range userReasons {
+		fmt.Println(permissionErr)
+		
+		// ConditionErrors property will hold all ConditionNotSatisfied errors.
+		for _, conditionErr := range permissionErr.ConditionErrors {
+		fmt.Println(conditionErr)
+		
+		// If needed, ConditionNotSatisfied can be introspected further. 
+		if emptyCondition, ok := conditionErr.Condition.(*restrict.EmptyCondition); ok {
+			fmt.Println(emptyCondition.ID)
+			}
+		}
+	}
+}
+```
+Please note than in complete mode, **errors from parent Roles will not be gathered!** If a check for given Role and all its parents returned an error, only the error from the original Role will be returned as a reason.
+
+You can find more comprehensive error handling in [this example](https://github.com/el-mike/restrict/blob/master/internal/examples/error_handling_example.go).
+
 ## Conditions
-Conditions allows to define more specific access control. It's similar to ABAC model, where more than just associated role needs to be validated in order to grant the access. For example, a Subject can only update the Resource if it was created by it. Such a requirement can be expressed with Restrict as a Condition. If the Condition is not satsfied, access will not be granted, even if Subject does have the required Role.
+Conditions allows to define more specific access control. It's similar to ABAC model, where more than just associated role needs to be validated in order to grant the access. For example, a Subject can only update the Resource if it was created by it. Such a requirement can be expressed with Restrict as a Condition. If the Condition is not satisfied, access will not be granted, even if Subject does have the required Role.
 
 Restrict ships with couple of built-in Conditions, but any number of custom Conditions can be added.
 
