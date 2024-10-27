@@ -886,6 +886,6 @@ Please note that test suite uses external library [testify](github.com/stretchr/
 ### Conventions
 
 This repository follows [ConventionalCommits](https://www.conventionalcommits.org/en/v1.0.0/) specification for creating commit messages. There is `prepare-commit-msg` hook set up to ensure following those rules. Branch names should also reflect the type of work it contains - one of following should be used:
-* `feature/<task-description>`
-* `bugfix/<task-description>`
+* `feat/<task-description>`
+* `fix/<task-description>`
 * `chore/<task-description>`
