@@ -1,6 +1,6 @@
 package examples
 
-import "github.com/el-mike/restrict"
+import "github.com/el-mike/restrict/v2"
 
 var ExamplePolicy = &restrict.PolicyDefinition{
 	// A map of reusable Permissions. Key corresponds to a preset's name, which can

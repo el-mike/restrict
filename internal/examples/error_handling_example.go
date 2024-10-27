@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/el-mike/restrict"
-	"github.com/el-mike/restrict/adapters"
+	"github.com/el-mike/restrict/v2"
+	"github.com/el-mike/restrict/v2/adapters"
 )
 
 var errorHandlingExamplePolicy = &restrict.PolicyDefinition{

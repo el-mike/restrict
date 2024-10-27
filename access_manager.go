@@ -3,7 +3,7 @@ package restrict
 
 import (
 	"fmt"
-	"github.com/el-mike/restrict/internal/utils"
+	"github.com/el-mike/restrict/v2/internal/utils"
 )
 
 // AccessManager - an entity responsible for checking the authorization. It uses underlying

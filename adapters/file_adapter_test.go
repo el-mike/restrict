@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/el-mike/restrict"
+	"github.com/el-mike/restrict/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
