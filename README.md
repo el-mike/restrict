@@ -15,6 +15,8 @@ Restrict is an authorization library that provides a hybrid of RBAC and ABAC mod
 * [Policy](#policy)
 * [Access Request](#access-request)
 * [Access Manager](#access-manager)
+* [Validation and errors](#validation-and-errors)
+  * [Validation strategy](#validation-strategy)
 * [Conditions](#conditions)
 	* [Built-in Conditions](#built-in-conditions)
 		* [Empty Condition](#empty-condition)
@@ -40,14 +42,12 @@ go get github.com/el-mike/restrict
 Restrict follows [semantic versioning](https://semver.org/), so any changes will be applied according to its principles.
 
 ## Concepts
-Restrict helps with building simple yet powerful access policies in declarative way. In order to do that, we introduce following concepts:
-* **Subject** - an entity that wants to perform some actions. Needs to implement `Subject` interface and provide unique role name. Subject is usually any kind of user or client in your domain. 
-* **Resource** - an entity that is a target of the actions. Needs to implement `Resource` interface and provide unique resource name. Resource can be implemented by any entity or object in your domain.
+Restrict helps with building simple yet powerful access policies in a declarative way. In order to do that, we introduce following concepts:
+* **Subject** - an entity that wants to perform some actions. Needs to implement `Subject` interface and provide a list of assigned roles. Subject is usually any kind of user or client in your domain. 
+* **Resource** - an entity that is a target of an action. Needs to implement `Resource` interface and provide unique resource name. Resource can be implemented by any entity or object in your domain.
 * **Action** - an arbitrary operation that can be performed on given Resource.
 * **Context** - a map of values containing any additional data needed to validate the access rights.
-* **Condition** - requirement that needs to be satisfied in order to grant the access. There are couple of built-in Conditions, but any custom Condition can be added, as long as it implements `Condition` interface. Conditions are the way to express more granular control.
-
-Restrict uses those informations to determine whether an access can be granted.
+* **Condition** - requirement that needs to be satisfied in order to grant the access. There are a couple of built-in Conditions, but any custom Condition can be added, as long as it implements `Condition` interface. Conditions are the way to express more granular control.
 
 ## Basic usage
 ```go
@@ -56,16 +56,16 @@ type User struct {
 }
 
 // Subject interface implementation.
-func (u *User) GetRole() string {
-	return "User"
+func (u *User) GetRoles() []string {
+	return []string{"User"}
 }
 
-// Example entity with some fields.
 type Conversation struct {
-	ID           string
-	CreatedBy    string
-	Participants []string
-	Active       bool
+	ID            string
+	CreatedBy     string
+	Participants  []string
+	MessagesCount int
+	Active        bool
 }
 
 // Resource interface implementation.
@@ -98,12 +98,11 @@ func main() {
 	manager := restrict.NewAccessManager(policyMananger)
 
 	if err = manager.Authorize(&restrict.AccessRequest{
-		Subject:  &User{},
-		Resource: &Conversation{},
-		Actions:  []string{"read", "delete"},
+		Subject:        &User{},
+		Resource:       &Conversation{},
+		Actions:        []string{"read"},
 	}); err != nil {
-		fmt.Print(err) // Access denied for action: "delete". Reason: Permission for action: "delete" is not granted for Resource: "Conversation"
-
+		fmt.Println(err) // access denied for Action: "read" on Resource: "Conversation"
 	}
 }
 ```
@@ -198,7 +197,7 @@ var policy = &restrict.PolicyDefinition{
 ```
 
 ## Access Request
-`AccessRequest` is an object describing a question about the access - can **Subject** perform given **Actions** on particular **Resource**.
+`AccessRequest` is an object describing a question about the access - can a **Subject** perform given **Actions** on a particular **Resource**.
 
 If you only need RBAC-like functionality, or you want to perform "preliminary" access check (for example to just check if Subject can read given Resource at all, regardless of Conditions), empty Subject/Resource instances will be enough. Otherwise, Subject and Resource should be retrieved prior to authorization and passed along in AccessRequest.
 
@@ -208,31 +207,38 @@ Here is an example of AccessRequest:
 ```go
 // ... manager setup
 
-// Create empty instances or provide the correct entitites.
+// Create empty instances or provide the correct entities.
 user := &User{}
 conversation := &Conversation{}
 
 accessRequest := &restrict.AccessRequest{
-	// Required - who wants to perform the actions. It has to be
-	// an instance of Subject interface. 
+	// Subject - subject (typically a user) that wants to perform given Actions.
+	// Needs to implement Subject interface.
+	// Required.
 	Subject: user,
-	// Required - on which Resource actions will be performed. It has to be
-	// an instance of Resource interface.
+	// Resource - resource that given Subject wants to interact with.
+	// Needs to implement Resource interface.
+	// Required.
 	Resource: conversation,
-	// Required - operations that given Subject wants to perform.
+	// Actions - list of operations Subject wants to perform on given Resource.
+	// Required.
 	Actions:  []string{"read", "create"},
-	// Optional - a map of additional, external values that can be
-	// accessed by Conditions. Values can be of any type.
+	// Context - map of any additional values needed while checking the Conditions.
+	// Optional.
 	Context: restrict.Context{
 		"SomeField": "someValue",
 	},
-	// Optional, lets you to skip Conditions checking.
-	// Default: false.
+	// SkipConditions - allows to skip Conditions while checking the access.
+	// Optional, default: false.
 	SkipConditions: false,
+	// CompleteValidation - when true, validation will not return early, and all possible errors
+	// will be returned, including all Conditions checks.
+	// Optional, default: false.
+	CompleteValidation bool
 }
 
 // If the access is granted, err will be nil - otherwise,
-// an error will be returned containing an information about the failure.
+// an error will be returned containing information about the failure.
 err = manager.Authorize(accessRequest)
 ```
 
@@ -269,35 +275,114 @@ accessRequest := &restrict.AccessRequest{
 err := manager.Authorize(accessRequest)
 ```
 
-### AccessManager errors
-Since `Authorize` method depends on various operations, including external ones provided in a form of Conditions, its return type is a general `error` type. However, in order to provide easier error handling, when error is caused by policy validation only (i.e. Permission is not granted for given Role or Conditions were not satsified), `Authorize` returns an instance of `AccessDeniedError`, which has couple of helper methods.
+## Validation and errors
+Since `Authorize` method depends on various operations, including external ones provided in a form of Conditions, its return type is a general `error` type. However, when error is caused by actual policy validation (i.e. Permission is not granted or Conditions were not satisfied), `Authorize` returns an instance of `AccessDeniedError`, which provides a lot of information and context about the reason behind denied access. It facilitates easy error handling and debugging.
 
+If the error is caused by policy validation, it will be returned according to [validation strategy](#validation-strategy) used in the request. Any other error will be returned immediately.
+
+`AccessDeniedError` can contain one or more underlying reasons - errors of type `PermissionError`, that can be accessed via `Reasons` property. Each `PermissionError` can contain zero or more `ConditionNotSatisfiedError` errors, accessible via `ConditionErrors` property.  
+
+The error returned can be tested using type assertion.
 ```go
-
 err := manager.Authorize(accessRequest)
-
 if accessError, ok := err.(*restrict.AccessDeniedError); ok {
-	// Error() implementation. Returns a message in a form:
-	// Access denied for action: "...". Reason: Permission for action: "..." is not granted for Resource: "..."
-	fmt.Print(accessError)
+	// Error() implementation. Returns a message in a form: "access denied for Action/s: ... on Resource: ..."
+	fmt.Println(accessError)
 	// Returns an AccessRequest that failed.
-	fmt.Print(accessError.FailedRequest())
-	// Returns underlying error which was the reason of a failure.
-	fmt.Print(accessError.Reason())
-
-	// If the reason of an AccessDeniedError was failed Condition,
-	// this helper method returns it directly. Otherwise, nil will be returned.
-	failedCondition := accessError.FailedCondition()
-
-	// You can later cast the Condition to the type you want.
-	if emptyCondition, ok := failedCondition.(*restrict.EmptyCondition); failedCondition != nil && ok {
-		fmt.Print(emptyCondition.ID)
+	fmt.Println(accessError.Request)
+	// Returns first reason for the denied access.
+	// Especially helpful in fail-early mode, where there will only be one Reason.
+	fmt.Println(accessError.FirstReason())
+	
+	// Reasons property will hold all errors that caused the access to be denied.
+	for _, permissionErr := range accessError.Reasons {
+		fmt.Println(permissionErr)
+		fmt.Println(permissionErr.Action)
+		fmt.Println(permissionErr.RoleName)
+		fmt.Println(permissionErr.ResourceName)
+		
+		// Returns first ConditionNotSatisfied error for given PermissionError, if any was returned for given PermissionError.
+		// Especially helpful in fail-early mode, where there will only be one failed Condition.
+		fmt.Println(permissionErr.FirstConditionError())
+		
+		// ConditionErrors property will hold all ConditionNotSatisfied errors.
+		for _, conditionErr := range permissionErr.ConditionErrors {
+			fmt.Println(conditionErr)
+			fmt.Println(conditionErr.Reason)
+			
+			// Every ConditionNotSatisfied contains an instance of Condition that returned it,
+			// so it can be tested using type assertion to get more details about failed Condition.
+			if emptyCondition, ok := conditionErr.Condition.(*restrict.EmptyCondition); ok {
+				fmt.Println(emptyCondition.ID)
+			}
+		}
 	}
 }
 ```
 
+### Validation strategy
+Access can be validated in one of two modes - fail-early or complete. Note that **by default, restrict will run in fail-early mode**. To use complete validation, set `CompleteValidation` to true on `AccessRequest` being authorized.
+
+In **fail-early mode**, validation will be aborted as soon as any policy validation error is encountered. `AccessDeniedError` will only contain one reason for failure, even when Subject with multiple Roles is being tested, or when `AccessRequest` contains multiple Actions. `FirstReason()` and `FirstConditionError()` can be used to make error handling easier in fail-early mode.
+
+```go
+err := manager.Authorize(accessRequest)
+if accessError, ok := err.(*restrict.AccessDeniedError); ok {
+	reason := accessError.FirstReason()
+	fmt.Println(reason)
+	
+	conditionErr := reason.FirstConditionError()
+	if conditionErr != nil {
+		fmt.Println(conditionErr)
+		
+		// If needed, ConditionNotSatisfied can be introspected further. 
+		if emptyCondition, ok := conditionErr.Condition.(*restrict.EmptyCondition); ok {
+			fmt.Println(emptyCondition.ID)
+		}
+	}
+}
+```
+
+In **complete mode**, validation will not be aborted on first encountered error - instead, it will continue until all Roles and Actions are checked, gathering the errors along the way. If given `Permission` have more than one `Condition` attached, they will all be checked as well.
+This mode is helpful when full information about access denial is needed - for example when debugging, or when checking user's access as an administrator.
+
+`Reasons` property on `AccessDeniedError` provides some additional utility methods, that make it easier to handle the errors:
+- `GetByRoleName` will return only the reasons related to checking given Role
+- `GetByAction` will return only the reasons related to checking given Action
+- `GetFailedActions` will return all Actions for which access has been denied
+
+```go
+accessRequest := &restrict.AccessRequest{
+	// ...
+	CompleteValidation: true,
+}
+
+err := manager.Authorize(accessRequest)
+if accessError, ok := err.(*restrict.AccessDeniedError); ok {
+	// Get only the Reasons related to Role user, that were returned for "read" action.
+	userReasons := accessError.Reasons.GetByRoleName("user").GetByAction("read")
+	
+	for _, permissionErr := range userReasons {
+		fmt.Println(permissionErr)
+		
+		// ConditionErrors property will hold all ConditionNotSatisfied errors.
+		for _, conditionErr := range permissionErr.ConditionErrors {
+		fmt.Println(conditionErr)
+		
+		// If needed, ConditionNotSatisfied can be introspected further. 
+		if emptyCondition, ok := conditionErr.Condition.(*restrict.EmptyCondition); ok {
+			fmt.Println(emptyCondition.ID)
+			}
+		}
+	}
+}
+```
+Please note than in complete mode, **errors from parent Roles will not be gathered!** If a check for given Role and all its parents returned an error, only the error from the original Role will be returned as a reason.
+
+You can find more comprehensive error handling in [this example](https://github.com/el-mike/restrict/blob/master/internal/examples/error_handling_example.go).
+
 ## Conditions
-Conditions allows to define more specific access control. It's similar to ABAC model, where more than just associated role needs to be validated in order to grant the access. For example, a Subject can only update the Resource if it was created by it. Such a requirement can be expressed with Restrict as a Condition. If the Condition is not satsfied, access will not be granted, even if Subject does have the required Role.
+Conditions allows to define more specific access control. It's similar to ABAC model, where more than just associated role needs to be validated in order to grant the access. For example, a Subject can only update the Resource if it was created by it. Such a requirement can be expressed with Restrict as a Condition. If the Condition is not satisfied, access will not be granted, even if Subject does have the required Role.
 
 Restrict ships with couple of built-in Conditions, but any number of custom Conditions can be added.
 
