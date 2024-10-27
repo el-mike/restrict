@@ -6,7 +6,8 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/el-mike/restrict.svg)](https://pkg.go.dev/github.com/el-mike/restrict)
 ![Release](https://img.shields.io/github/v/release/el-mike/restrict)
 
-Restrict is an authorization library that provides a hybrid of RBAC and ABAC models, allowing to define simple role-based policies while also offering fine-grained control when needed. It helps you enforce your access policies away from the business logic, and express them in a convenient way. 
+Restrict is an authorization library that provides a hybrid of RBAC and ABAC models, allowing to define simple role-based policies while also offering fine-grained control when needed. It helps you enforce your access policies away from the business logic, and express them in a convenient way.
+### [API Reference](https://pkg.go.dev/github.com/el-mike/restrict#section-documentation)
 
 ## Table of contents
 * [Installation](#installation)
