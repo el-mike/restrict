@@ -15,6 +15,8 @@ Restrict is an authorization library that provides a hybrid of RBAC and ABAC mod
 * [Policy](#policy)
 * [Access Request](#access-request)
 * [Access Manager](#access-manager)
+* [Validation and errors](#validation-and-errors)
+  * [Validation strategy](#validation-strategy)
 * [Conditions](#conditions)
 	* [Built-in Conditions](#built-in-conditions)
 		* [Empty Condition](#empty-condition)
