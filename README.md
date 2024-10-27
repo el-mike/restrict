@@ -2,13 +2,13 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/el-Mike/gochat)](https://goreportcard.com/report/github.com/el-Mike/restrict)
 ![License](https://img.shields.io/github/license/el-mike/restrict)
-[![Tests](https://github.com/el-mike/restrict/actions/workflows/master.yml/badge.svg)](https://github.com/el-mike/restrict/actions/workflows/master.yml)
-[![Go Reference](https://pkg.go.dev/badge/github.com/el-mike/restrict.svg)](https://pkg.go.dev/github.com/el-mike/restrict)
+[![Tests](https://github.com/el-mike/restrict/actions/workflows/v2.yml/badge.svg)](https://github.com/el-mike/restrict/actions/workflows/v2.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/el-mike/restrict.svg)](https://pkg.go.dev/github.com/el-mike/restrict/v2)
 ![Release](https://img.shields.io/github/v/release/el-mike/restrict)
 
 Restrict is an authorization library that provides a hybrid of RBAC and ABAC models, allowing to define simple role-based policies while also offering fine-grained control when needed. It helps you enforce your access policies away from the business logic, and express them in a convenient way.
-### [API Reference](https://pkg.go.dev/github.com/el-mike/restrict#section-documentation)
-### [Changelog](https://github.com/el-mike/restrict/blob/master/CHANGELOG.md)
+### [API Reference](https://pkg.go.dev/github.com/el-mike/restrict/v2#section-documentation)
+### [Changelog](https://github.com/el-mike/restrict/blob/v2/CHANGELOG.md)
 
 ## Table of contents
 * [Installation](#installation)
@@ -381,7 +381,7 @@ if accessError, ok := err.(*restrict.AccessDeniedError); ok {
 ```
 Please note than in complete mode, **errors from parent Roles will not be gathered!** If a check for given Role and all its parents returned an error, only the error from the original Role will be returned as a reason.
 
-You can find more comprehensive error handling in [this example](https://github.com/el-mike/restrict/blob/master/internal/examples/error_handling_example.go).
+You can find more comprehensive error handling in [this example](https://github.com/el-mike/restrict/blob/v2/internal/examples/error_handling_example.go).
 
 ## Conditions
 Conditions allows to define more specific access control. It's similar to ABAC model, where more than just associated role needs to be validated in order to grant the access. For example, a Subject can only update the Resource if it was created by it. Such a requirement can be expressed with Restrict as a Condition. If the Condition is not satisfied, access will not be granted, even if Subject does have the required Role.
@@ -810,8 +810,8 @@ if err != nil {
 }
 ```
 Please refer to:
-* [JSON policy](https://github.com/el-mike/restrict/blob/master/internal/examples/policy_example.json)
-* [YAML policy](https://github.com/el-mike/restrict/blob/master/internal/examples/policy_example.yaml)
+* [JSON policy](https://github.com/el-mike/restrict/blob/v2/internal/examples/policy_example.json)
+* [YAML policy](https://github.com/el-mike/restrict/blob/v2/internal/examples/policy_example.yaml)
 
 To see examples of JSON/YAML policies.
 
