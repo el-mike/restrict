@@ -7,3 +7,4 @@ rules.txt
 **/debug.test
 
 internal/examples/basic_usage_test.go
+internal/examples/error_handling_example_test.go
