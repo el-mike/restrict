@@ -8,6 +8,7 @@
 
 Restrict is an authorization library that provides a hybrid of RBAC and ABAC models, allowing to define simple role-based policies while also offering fine-grained control when needed. It helps you enforce your access policies away from the business logic, and express them in a convenient way.
 ### [API Reference](https://pkg.go.dev/github.com/el-mike/restrict#section-documentation)
+### [Changelog](https://github.com/el-mike/restrict/blob/master/CHANGELOG.md)
 
 ## Table of contents
 * [Installation](#installation)
