@@ -102,9 +102,9 @@ func main() {
 	if err = manager.Authorize(&restrict.AccessRequest{
 		Subject:        &User{},
 		Resource:       &Conversation{},
-		Actions:        []string{"read"},
+		Actions:        []string{"delete"},
 	}); err != nil {
-		fmt.Println(err) // access denied for Action: "read" on Resource: "Conversation"
+		fmt.Println(err) // access denied for Action: "delete" on Resource: "Conversation"
 	}
 }
 ```
