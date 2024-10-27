@@ -38,7 +38,7 @@ Restrict is an authorization library that provides a hybrid of RBAC and ABAC mod
 ## Installation
 To install the library, run:
 ```
-go get github.com/el-mike/restrict
+go get github.com/el-mike/restrict/v2
 ```
 **Go version 1.15+ is required!**  
 Restrict follows [semantic versioning](https://semver.org/), so any changes will be applied according to its principles.
